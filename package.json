@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "name": "game-engine",
+  "description": "A TypeScript-based development simulation engine for test management scenarios.",
+  "version": "1.0.0",
+  "main": "./dist/Game.js",
+  "types": "./dist/Game.d.ts",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build",
+    "watch": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
