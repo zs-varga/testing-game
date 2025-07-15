@@ -1,16 +1,17 @@
 import { IFeature, Feature } from './Feature.js';
 import { IDefect, Defect } from './Defect.js';
-import { Testing } from './Testing.js';
 import { Game } from './Game.js';
+import { Sprint } from './Sprint.js';
+import { ITestTask } from './TestTask/TestTask.js';
 
 export interface IProject {
   id: number;
   name: string;
   devEffort: number;
   testEffort: number;
-  backlog: (IFeature | IDefect)[];
+  backlog: (IFeature | IDefect | ITestTask)[];
   defects: IDefect[];
-  testing: Testing;
+  sprints: Sprint[];
   game: Game;
 }
 
@@ -19,9 +20,9 @@ export class Project implements IProject {
   private _name: string;
   private _devEffort: number;
   private _testEffort: number;
-  private _backlog: (IFeature | IDefect)[];
+  private _backlog: (IFeature | IDefect | ITestTask)[];
   private _defects: IDefect[];
-  private _testing: Testing;
+  private _sprints: Sprint[];
   private _game: Game;
 
   constructor(
@@ -30,7 +31,7 @@ export class Project implements IProject {
     game: Game,
     devEffort: number = 0,
     testEffort: number = 0,
-    backlog: (IFeature | IDefect)[] = [],
+    backlog: (IFeature | IDefect | ITestTask)[] = [],
     defects: IDefect[] = []
   ) {
     this._id = id;
@@ -39,7 +40,7 @@ export class Project implements IProject {
     this._testEffort = testEffort;
     this._backlog = backlog;
     this._defects = defects;
-    this._testing = new Testing(this);
+    this._sprints = [];
     this._game = game;
   }
 
@@ -60,7 +61,7 @@ export class Project implements IProject {
     return this._testEffort;
   }
 
-  get backlog(): (IFeature | IDefect)[] {
+  get backlog(): (IFeature | IDefect | ITestTask)[] {
     return this._backlog;
   }
 
@@ -68,8 +69,8 @@ export class Project implements IProject {
     return this._defects;
   }
 
-  get testing(): Testing {
-    return this._testing;
+  get sprints(): Sprint[] {
+    return [...this._sprints];
   }
 
   get game(): Game {
@@ -101,7 +102,7 @@ export class Project implements IProject {
     }
   }
 
-  set backlog(value: (IFeature | IDefect)[]) {
+  set backlog(value: (IFeature | IDefect | ITestTask)[]) {
     this._backlog = value;
   }
 
@@ -109,11 +110,7 @@ export class Project implements IProject {
     this._defects = value;
   }
 
-  set testing(value: Testing) {
-    this._testing = value;
-  }
-
-  addToBacklog(item: IFeature | IDefect): void {
+  addToBacklog(item: IFeature | IDefect | ITestTask): void {
     this.backlog.push(item);
   }
 
@@ -139,7 +136,7 @@ export class Project implements IProject {
     return false;
   }
 
-  getTaskById(id: number): IFeature | IDefect | undefined {
+  getTaskById(id: number): IFeature | IDefect | ITestTask | undefined {
     // First search in the backlog
     const backlogTask = this.backlog.find(task => task.id === id);
     if (backlogTask) {
@@ -171,6 +168,13 @@ export class Project implements IProject {
         maxId = defect.id;
       }
     });
+
+    // Check sprints for highest ID
+    this.sprints.forEach(sprint => {
+      if (sprint.id > maxId) {
+        maxId = sprint.id;
+      }
+    });
     
     return maxId;
   }
@@ -182,5 +186,16 @@ export class Project implements IProject {
   defectFound(defect: IDefect): void {
     defect.isFound = true;
     this.addToBacklog(defect);
+  }
+
+  newSprint(): Sprint {
+    const sprintId = this._sprints.length + 1;
+    const sprint = new Sprint(sprintId, this);
+    this._sprints.push(sprint);
+    return sprint;
+  }
+
+  getCurrentSprint(): Sprint | undefined {
+    return this._sprints.length > 0 ? this._sprints[this._sprints.length - 1] : undefined;
   }
 }

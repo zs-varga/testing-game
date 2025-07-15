@@ -5,7 +5,7 @@ export default {
   // Test file patterns
   testMatch: [
     '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts'
+    '**/__tests__/**/*.test.ts'
   ],
   
   // Module file extensions

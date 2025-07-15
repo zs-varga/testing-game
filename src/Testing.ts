@@ -1,3 +1,4 @@
+/*
 import { DefectType } from "./Defect.js";
 import { Feature } from "./Feature.js";
 import { Project } from "./Project.js";
@@ -72,51 +73,6 @@ export class Testing implements ITesting {
     this.findDefects(feature, "usability", effort / 4);
   }
 
-  // Focused testing methods
-  performanceTest(feature: Feature, effort: number): void {
-    if (effort <= 0 || effort > this.project.testEffort) {
-      throw new Error("testing: invalid effort");
-    }
-    if (!feature.isDone()) {
-      throw new Error("testing: cannot test a feature that is not done");
-    }
-
-    this.findDefects(feature, "performance", effort);
-  }
-
-  securityTest(feature: Feature, effort: number): void {
-    if (effort <= 0 || effort > this.project.testEffort) {
-      throw new Error("testing: invalid effort");
-    }
-    if (!feature.isDone()) {
-      throw new Error("testing: cannot test a feature that is not done");
-    }
-
-    this.findDefects(feature, "security", effort);
-  }
-
-  usabilityTest(feature: Feature, effort: number): void {
-    if (effort <= 0 || effort > this.project.testEffort) {
-      throw new Error("testing: invalid effort");
-    }
-    if (!feature.isDone()) {
-      throw new Error("testing: cannot test a feature that is not done");
-    }
-
-    this.findDefects(feature, "usability", effort);
-  }
-
-  functionalTest(feature: Feature, effort: number): void {
-    if (effort <= 0 || effort > this.project.testEffort) {
-      throw new Error("testing: invalid effort");
-    }
-    if (!feature.isDone()) {
-      throw new Error("testing: cannot test a feature that is not done");
-    }
-
-    this.findDefects(feature, "functionality", effort);
-  }
-
   spreadEffort(feature: Feature, effortDistribution: Record<DefectType, number>): void {
     const sumEffort: number = (
       Object.values(effortDistribution) as number[]
@@ -161,3 +117,4 @@ export class Testing implements ITesting {
       });
   }
 }
+*/

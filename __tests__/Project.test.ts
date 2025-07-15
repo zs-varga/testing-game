@@ -22,11 +22,6 @@ describe('Project Class', () => {
       expect(project.backlog).toEqual([]);
       expect(project.defects).toEqual([]);
     });
-
-    test('should have testing component initialized', () => {
-      expect(project.testing).toBeDefined();
-      expect(project.testing.project).toBe(project);
-    });
   });
 
   describe('ID Management', () => {
@@ -183,6 +178,52 @@ describe('Project Class', () => {
       
       project.name = ''; // Empty
       expect(project.name).toBe('New Name'); // Should remain unchanged
+    });
+  });
+
+  describe('Sprint Management', () => {
+    test('should create new sprint and add to container', () => {
+      const sprint1 = project.newSprint();
+      
+      expect(sprint1.id).toBe(1);
+      expect(sprint1.project).toBe(project);
+      expect(project.sprints).toContain(sprint1);
+      expect(project.sprints.length).toBe(1);
+    });
+
+    test('should create multiple sprints with incremental IDs', () => {
+      const sprint1 = project.newSprint();
+      const sprint2 = project.newSprint();
+      const sprint3 = project.newSprint();
+      
+      expect(sprint1.id).toBe(1);
+      expect(sprint2.id).toBe(2);
+      expect(sprint3.id).toBe(3);
+      expect(project.sprints.length).toBe(3);
+    });
+
+    test('should get current sprint (last created)', () => {
+      expect(project.getCurrentSprint()).toBeUndefined();
+      
+      const sprint1 = project.newSprint();
+      expect(project.getCurrentSprint()).toBe(sprint1);
+      
+      const sprint2 = project.newSprint();
+      expect(project.getCurrentSprint()).toBe(sprint2);
+      
+      const sprint3 = project.newSprint();
+      expect(project.getCurrentSprint()).toBe(sprint3);
+    });
+
+    test('should return copy of sprints array', () => {
+      const sprint1 = project.newSprint();
+      const sprint2 = project.newSprint();
+      
+      const sprintsArray = project.sprints;
+      sprintsArray.push(null as any); // Try to modify the array
+      
+      expect(project.sprints.length).toBe(2); // Should remain unchanged
+      expect(project.sprints).toEqual([sprint1, sprint2]);
     });
   });
 });
