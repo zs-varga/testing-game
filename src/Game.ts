@@ -154,7 +154,7 @@ export class Game implements IGame {
 
       const newDefect = new Defect(
         newId,
-        DEFECT_NAMES[randomType][i],
+        DEFECT_NAMES[randomType][(i - 1) % DEFECT_NAMES[randomType].length],
         project,
         Math.floor(Math.random() * task.size) + 1, // size
         Math.floor(Math.random() * task.complexity) + 1, // complexity
