@@ -62,13 +62,29 @@ export class Game implements IGame {
       "Dashboard",
       "Settings",
       "Localization",
+      "Backup & Restore",
+      "Audit Logging",
+      "API Integration",
+      "User Profile",
+      "Preferences",
+      "Help & Documentation",
+      "Dark/Light Theme",
+      "Accessibility Features",
+      "Mobile Responsiveness",
+      "Reporting & Analytics",
+      "Data Visualization",
+      "Content Management",
+      "Workflow Engine",
+      "Calendar Integration",
+      "Email Integration",
+      "Payment Processing"
     ]
       .map((name) => ({ name, sort: Math.random() })) // Randomized order
       .sort((a, b) => a.sort - b.sort)
       .map(({ name }) => name);
 
-    const MAX_SIZE = 3;
-    const MAX_COMPLEXITY = 5;
+    const MAX_SIZE = 7;
+    const MAX_COMPLEXITY = 7;
     const createdFeatures: IFeature[] = [];
 
     // Create n new features

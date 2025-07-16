@@ -9,7 +9,8 @@
     "@types/jest": "^30.0.0",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "http-server": "^14.1.1"
   },
   "scripts": {
     "build": "tsc",
@@ -18,7 +19,9 @@
     "watch": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "serve": "npm run build && http-server . -p 8080 -c-1",
+    "dev": "npm run build && http-server . -p 8080 -c-1 --cors"
   },
   "keywords": [],
   "author": "",
