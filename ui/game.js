@@ -77,6 +77,7 @@ class GameUI {
         this.renderTestTasks();
         this.renderDoneTasks();
         this.updateEffortCounters();
+        this.updateExecuteButtonState();
     }
 
     renderBacklog() {
@@ -107,19 +108,19 @@ class GameUI {
 
     renderTestTasks() {
         const container = document.getElementById('test-tasks');
-        // Don't clear existing test task forms, only update saved cards
-        const existingForms = container.querySelectorAll('.test-task-form');
-        
-        // Remove only saved test task cards, keep forms
-        container.querySelectorAll('.task-card:not(.test-task-form)').forEach(card => {
-            card.remove();
-        });
+        container.innerHTML = '';
 
         if (this.currentSprint) {
             this.currentSprint.testTasks.forEach(task => {
-                const card = this.createTaskCard(task, true);
-                container.appendChild(card);
+                const taskForm = this.createTestTaskForm(task);
+                container.appendChild(taskForm);
             });
+            
+            // Re-validate all test tasks after rendering
+            setTimeout(() => {
+                this.validateAllTestTasks();
+                this.updateExecuteButtonState();
+            }, 0);
         }
     }
 
@@ -142,12 +143,6 @@ class GameUI {
         const card = document.createElement('div');
         card.className = `task-card ${task.getType().toLowerCase().replace('task', '-task')}`;
         card.dataset.taskId = task.id;
-
-        if (isTestTask) {
-            card.addEventListener('click', () => {
-                this.editTestTask(task, card);
-            });
-        }
 
         const typeDisplay = task.getType() === 'ExploratoryTestTask' ? 'Exploratory' :
                            task.getType() === 'GatherKnowledgeTask' ? 'Knowledge' :
@@ -196,292 +191,99 @@ class GameUI {
     }
 
     addTestTaskForm() {
-        const container = document.getElementById('test-tasks');
-        
-        // Check if there's already a form
-        if (container.querySelector('.test-task-form')) {
-            return;
-        }
-
-        const form = document.createElement('div');
-        form.className = 'task-card test-task-form';
-
-        form.innerHTML = `
-            <div class="form-group">
-                <label>Action</label>
-                <div id="form-test-type" class="action-checkboxes">
-                    <div class="action-checkbox">
-                        <input type="radio" id="action-exploratory" name="test-type" value="exploratory" onchange="gameUI.updateFormFeatureOptions()">
-                        <label for="action-exploratory">Exploratory Testing</label>
-                    </div>
-                    <div class="action-checkbox">
-                        <input type="radio" id="action-knowledge" name="test-type" value="knowledge" onchange="gameUI.updateFormFeatureOptions()">
-                        <label for="action-knowledge">Knowledge Gathering</label>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Features</label>
-                <div id="form-test-feature" class="feature-checkboxes">
-                    <!-- Feature checkboxes will be populated here -->
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Effort</label>
-                <input type="number" id="form-test-effort" min="1" max="${this.currentSprint.remainingTestEffort()}" placeholder="Enter effort points">
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-primary" onclick="gameUI.saveTestTask()">Save</button>
-                <button class="btn btn-danger" onclick="gameUI.cancelTestTask()">Cancel</button>
-            </div>
-            <div class="form-errors" id="form-errors"></div>
-        `;
-
-        container.appendChild(form);
-        
-        // Select first action by default
-        document.getElementById('action-exploratory').checked = true;
-        this.updateFormFeatureOptions();
-    }
-
-    saveTestTask() {
-        const testTypeRadio = document.querySelector('input[name="test-type"]:checked');
-        const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById('form-test-feature');
-        const effortValue = document.getElementById('form-test-effort').value;
-        const errorsDiv = document.getElementById('form-errors');
-
-        // Get selected feature IDs from checkboxes
-        const selectedFeatureIds = Array.from(featureContainer.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(checkbox => parseInt(checkbox.value))
-            .filter(id => !isNaN(id));
-
-        // Parse effort
-        const effort = parseInt(effortValue);
-
-        // Validation
-        const errors = [];
-        if (!testType) errors.push('Please select a test type');
-        if (selectedFeatureIds.length === 0) errors.push('Please select at least one feature');
-        if (!effortValue || isNaN(effort) || effort <= 0) errors.push('Please enter a valid effort amount');
-        if (!isNaN(effort) && effort > this.currentSprint.remainingTestEffort()) {
-            errors.push(`Effort cannot exceed remaining capacity (${this.currentSprint.remainingTestEffort()})`);
-        }
-
-        if (errors.length > 0) {
-            errorsDiv.innerHTML = errors.join('<br>');
-            errorsDiv.classList.add('show');
-            return;
-        }
-
-        // Find the features from the appropriate source
-        const features = [];
-        for (const featureId of selectedFeatureIds) {
-            let feature;
-            if (testType === 'knowledge') {
-                // Knowledge gathering: look in any feature from project backlog
-                feature = this.project.backlog.find(task => task.id === featureId && task.getType() === 'Feature');
-            } else {
-                // Exploratory testing: look in done features
-                feature = this.project.backlog.find(task => 
-                    task.id === featureId && task.isDone() && task.getType() === 'Feature'
-                );
-            }
-            
-            if (!feature) {
-                errorsDiv.innerHTML = `Feature with ID ${featureId} not found or not available for this test type`;
-                errorsDiv.classList.add('show');
-                return;
-            }
-            features.push(feature);
-        }
-
-        // Create the test task
+        // Create a new test task immediately with default values
         const taskId = this.project.getNextId();
-        const featureNames = features.map(f => f.name).join(', ');
-        const taskName = `${testType === 'exploratory' ? 'Exploratory Test' : 'Knowledge Gathering'} - ${featureNames}`;
+        const taskName = 'New Test Task';
         
-        let testTask;
-        if (testType === 'exploratory') {
-            testTask = new ExploratoryTestTask(taskId, taskName, this.project, features, effort);
-        } else {
-            testTask = new GatherKnowledgeTask(taskId, taskName, this.project, features, effort);
-        }
-
+        // Create with default exploratory type and first available feature (if any)
+        const availableFeatures = this.getAvailableFeaturesForTestType('exploratory');
+        const defaultFeature = availableFeatures.length > 0 ? [availableFeatures[0]] : [];
+        const defaultEffort = this.currentSprint.remainingTestEffort(); // Use remaining effort as default
+        
+        let testTask = new ExploratoryTestTask(taskId, taskName, this.project, defaultFeature, defaultEffort);
+        
         // Add to project backlog and current sprint
         this.project.addToBacklog(testTask);
         this.currentSprint.addTestTask(testTask);
+        
+        // Only add the new form to the container without re-rendering all forms
+        const container = document.getElementById('test-tasks');
+        const taskForm = this.createTestTaskForm(testTask);
+        container.appendChild(taskForm);
+        
+        // Update effort counters only
+        this.updateEffortCounters();
+        
+        // Re-validate all test task cards after adding a new one
+        this.validateAllTestTasks();
+        
+        // Update execute button state
+        this.updateExecuteButtonState();
+    }
 
-        // Remove the form and re-render
-        this.cancelTestTask();
-        this.render();
+    // These methods are no longer needed - test tasks are created immediately
+    saveTestTask() {
+        // Not used anymore
     }
 
     cancelTestTask() {
-        const form = document.querySelector('.test-task-form');
-        if (form) {
-            form.remove();
-        }
+        // Not used anymore
     }
 
     editTestTask(task, cardElement) {
-        // Replace the card with an edit form
-        const container = cardElement.parentNode;
+        // This method is no longer used - test tasks are always in form state
+    }
+
+    createTestTaskForm(task) {
         const form = document.createElement('div');
         form.className = 'task-card test-task-form';
-        form.dataset.editingTaskId = task.id;
+        form.dataset.taskId = task.id;
 
         const currentTestType = task.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
 
         form.innerHTML = `
             <div class="form-group">
                 <label>Action</label>
-                <div id="edit-test-type-${task.id}" class="action-checkboxes">
+                <div id="test-type-${task.id}" class="action-checkboxes">
                     <div class="action-checkbox">
-                        <input type="radio" id="edit-action-exploratory-${task.id}" name="edit-test-type-${task.id}" value="exploratory" onchange="gameUI.updateEditFeatureOptions(${task.id})" ${currentTestType === 'exploratory' ? 'checked' : ''}>
-                        <label for="edit-action-exploratory-${task.id}">Exploratory Testing</label>
+                        <input type="radio" id="action-exploratory-${task.id}" name="test-type-${task.id}" value="exploratory" onchange="gameUI.updateTestTaskFeatureOptions(${task.id}); gameUI.autoSaveTestTask(${task.id})" ${currentTestType === 'exploratory' ? 'checked' : ''}>
+                        <label for="action-exploratory-${task.id}">Exploratory Testing</label>
                     </div>
                     <div class="action-checkbox">
-                        <input type="radio" id="edit-action-knowledge-${task.id}" name="edit-test-type-${task.id}" value="knowledge" onchange="gameUI.updateEditFeatureOptions(${task.id})" ${currentTestType === 'knowledge' ? 'checked' : ''}>
-                        <label for="edit-action-knowledge-${task.id}">Knowledge Gathering</label>
+                        <input type="radio" id="action-knowledge-${task.id}" name="test-type-${task.id}" value="knowledge" onchange="gameUI.updateTestTaskFeatureOptions(${task.id}); gameUI.autoSaveTestTask(${task.id})" ${currentTestType === 'knowledge' ? 'checked' : ''}>
+                        <label for="action-knowledge-${task.id}">Knowledge Gathering</label>
                     </div>
                 </div>
             </div>
             <div class="form-group">
                 <label>Features</label>
-                <div id="edit-test-feature-${task.id}" class="feature-checkboxes">
+                <div id="test-feature-${task.id}" class="feature-checkboxes">
                     <!-- Feature checkboxes will be populated here -->
                 </div>
             </div>
             <div class="form-group">
                 <label>Effort</label>
-                <input type="number" id="edit-test-effort-${task.id}" min="1" max="${this.currentSprint.remainingTestEffort() + task.size}" value="${task.size}">
+                <div class="effort-slider-container">
+                    <input type="range" id="test-effort-${task.id}" min="1" max="${this.project.testEffort}" value="${task.size}" onchange="gameUI.autoSaveTestTask(${task.id})" oninput="gameUI.updateEffortDisplay(${task.id})">
+                    <span id="effort-display-${task.id}" class="effort-display">${task.size}</span>
+                </div>
             </div>
             <div class="form-actions">
-                <button class="btn btn-primary" onclick="gameUI.updateTestTask(${task.id})">Save</button>
                 <button class="btn btn-danger" onclick="gameUI.deleteTestTask(${task.id})">Delete</button>
             </div>
-            <div class="form-errors" id="edit-form-errors-${task.id}"></div>
+            <div class="form-errors" id="form-errors-${task.id}"></div>
         `;
 
-        container.replaceChild(form, cardElement);
-        
-        // Populate the feature checkboxes with the correct options and select the current features
-        this.updateEditFeatureOptions(task.id);
-        const featureContainer = document.getElementById(`edit-test-feature-${task.id}`);
-        if (featureContainer && task.features && task.features.length > 0) {
-            // Check all current features
-            task.features.forEach(feature => {
-                const checkbox = featureContainer.querySelector(`input[value="${feature.id}"]`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
-        }
+        // Populate the feature checkboxes 
+        setTimeout(() => {
+            this.updateTestTaskFeatureOptions(task.id);
+        }, 0);
+
+        return form;
     }
 
     updateTestTask(taskId) {
-        const testTypeRadio = document.querySelector(`input[name="edit-test-type-${taskId}"]:checked`);
-        const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById(`edit-test-feature-${taskId}`);
-        const effortValue = document.getElementById(`edit-test-effort-${taskId}`).value;
-        const errorsDiv = document.getElementById(`edit-form-errors-${taskId}`);
-
-        // Get selected feature IDs from checkboxes
-        const selectedFeatureIds = Array.from(featureContainer.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(checkbox => parseInt(checkbox.value))
-            .filter(id => !isNaN(id));
-
-        // Parse effort
-        const effort = parseInt(effortValue);
-
-        // Find the task
-        const task = this.project.getTaskById(taskId);
-        if (!task) return;
-
-        // Validation
-        const errors = [];
-        if (selectedFeatureIds.length === 0) errors.push('Please select at least one feature');
-        if (!effortValue || isNaN(effort) || effort <= 0) errors.push('Please enter a valid effort amount');
-        if (!isNaN(effort) && effort > this.currentSprint.remainingTestEffort() + task.size) {
-            errors.push(`Effort cannot exceed remaining capacity (${this.currentSprint.remainingTestEffort() + task.size})`);
-        }
-
-        if (errors.length > 0) {
-            errorsDiv.innerHTML = errors.join('<br>');
-            errorsDiv.classList.add('show');
-            return;
-        }
-
-        // Find the new features from the appropriate source
-        const newFeatures = [];
-        for (const featureId of selectedFeatureIds) {
-            let newFeature;
-            if (testType === 'knowledge') {
-                // Knowledge gathering: look in any feature from project backlog
-                newFeature = this.project.backlog.find(t => t.id === featureId && t.getType() === 'Feature');
-            } else {
-                // Exploratory testing: look in done features
-                newFeature = this.project.backlog.find(t => 
-                    t.id === featureId && t.isDone() && t.getType() === 'Feature'
-                );
-            }
-            
-            if (!newFeature) {
-                errorsDiv.innerHTML = `Feature with ID ${featureId} not found or not available for this test type`;
-                errorsDiv.classList.add('show');
-                return;
-            }
-            newFeatures.push(newFeature);
-        }
-
-        // Check if we need to create a new task (feature(s) or type changed)
-        const currentTestType = task.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
-        const currentFeatureIds = task.features.map(f => f.id).sort();
-        const newFeatureIds = newFeatures.map(f => f.id).sort();
-        const featuresChanged = JSON.stringify(currentFeatureIds) !== JSON.stringify(newFeatureIds);
-        const needsNewTask = testType !== currentTestType || featuresChanged;
-
-        if (needsNewTask) {
-            // Find the position of the old task to preserve order
-            const oldTaskIndex = this.currentSprint._testTasks.findIndex(t => t.id === taskId);
-            
-            // Remove the old task
-            this.currentSprint._testTasks = this.currentSprint._testTasks.filter(t => t.id !== taskId);
-            this.project.removeFromBacklog(taskId);
-
-            // Create a new task with updated properties
-            const newTaskId = this.project.getNextId();
-            const featureNames = newFeatures.map(f => f.name).join(', ');
-            const taskName = `${testType === 'exploratory' ? 'Exploratory Test' : 'Knowledge Gathering'} - ${featureNames}`;
-            
-            let newTask;
-            if (testType === 'exploratory') {
-                newTask = new ExploratoryTestTask(newTaskId, taskName, this.project, newFeatures, effort);
-            } else {
-                newTask = new GatherKnowledgeTask(newTaskId, taskName, this.project, newFeatures, effort);
-            }
-
-            // Add to project backlog
-            this.project.addToBacklog(newTask);
-            
-            // Insert the new task at the same position in the sprint
-            if (oldTaskIndex >= 0) {
-                this.currentSprint._testTasks.splice(oldTaskIndex, 0, newTask);
-            } else {
-                this.currentSprint.addTestTask(newTask);
-            }
-        } else {
-            // Only effort changed, just update the size
-            task.size = effort;
-        }
-
-        // Always remove any edit forms and re-render
-        const editForm = document.querySelector(`[data-editing-task-id="${taskId}"]`);
-        if (editForm) {
-            editForm.remove();
-        }
-        this.render();
+        // This method is no longer used - auto-save handles updates
     }
 
     deleteTestTask(taskId) {
@@ -491,11 +293,31 @@ class GameUI {
             this.currentSprint._testTasks = this.currentSprint._testTasks.filter(t => t.id !== taskId);
             this.project.removeFromBacklog(taskId);
         }
-        this.render();
+        
+        // Remove only the specific form from the DOM
+        const taskForm = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (taskForm) {
+            taskForm.remove();
+        }
+        
+        // Update effort counters only
+        this.updateEffortCounters();
+        
+        // Re-validate all test task cards after deleting one
+        this.validateAllTestTasks();
+        
+        // Update execute button state
+        this.updateExecuteButtonState();
     }
 
     executeSprint() {
         if (!this.currentSprint || this.currentSprint.isDone()) {
+            return;
+        }
+
+        // Check for validation errors in test tasks before executing
+        if (this.hasTestTaskValidationErrors()) {
+            alert('Please fix validation errors in test tasks before executing the sprint.');
             return;
         }
 
@@ -512,13 +334,16 @@ class GameUI {
         const defectsAfterSprint = this.project.backlog.filter(task => task.getType() === 'Defect').length;
         const newDefectsCreated = defectsAfterSprint > defectsBeforeSprint;
         
-        // Check if all features are developed and no features in current sprint
-        const allFeatures = this.project.backlog.filter(task => task.getType() === 'Feature');
-        const doneFeatures = allFeatures.filter(task => task.isDone());
-        const featuresInCurrentSprint = this.currentSprint.devTasks.filter(task => task.getType() === 'Feature');
+        // Check if there are any remaining (not-done) features or defects in the backlog
+        const remainingFeatures = this.project.backlog.filter(task => 
+            task.getType() === 'Feature' && !task.isDone()
+        );
+        const remainingDefects = this.project.backlog.filter(task => 
+            task.getType() === 'Defect' && !task.isDone()
+        );
         
-        // Game ends only if all features are done, no features in sprint, AND no new defects were created
-        if (doneFeatures.length === allFeatures.length && featuresInCurrentSprint.length === 0 && !newDefectsCreated) {
+        // Game ends if there are no not-done features or defects in the backlog
+        if (remainingFeatures.length === 0 && remainingDefects.length === 0) {
             this.endGame();
         } else {
             // Start new sprint
@@ -541,27 +366,44 @@ class GameUI {
             const testType = oldTask.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
             const availableFeatures = this.getAvailableFeaturesForTestType(testType);
             
-            // Filter old features to only include those still available
-            const validFeatures = oldTask.features.filter(oldFeature => 
-                availableFeatures.some(availFeature => availFeature.id === oldFeature.id)
-            );
-            
-            if (validFeatures.length > 0) {
-                // Create new test task with same properties
-                const taskId = this.project.getNextId();
-                const featureNames = validFeatures.map(f => f.name).join(', ');
-                const taskName = `${testType === 'exploratory' ? 'Exploratory Test' : 'Knowledge Gathering'} - ${featureNames}`;
+            if (testType === 'exploratory') {
+                // For exploratory testing, filter old features to only include those that are done
+                const validFeatures = oldTask.features.filter(oldFeature => 
+                    availableFeatures.some(availFeature => availFeature.id === oldFeature.id)
+                );
                 
-                let newTask;
-                if (testType === 'exploratory') {
-                    newTask = new ExploratoryTestTask(taskId, taskName, this.project, validFeatures, oldTask.size);
-                } else {
-                    newTask = new GatherKnowledgeTask(taskId, taskName, this.project, validFeatures, oldTask.size);
-                }
+                // If no features from the original selection are done, but there are other done features,
+                // recreate the task but with no features selected (user will need to select new ones)
+                if (validFeatures.length > 0 || availableFeatures.length > 0) {
+                    // Create new test task with same properties
+                    const taskId = this.project.getNextId();
+                    const featureNames = validFeatures.length > 0 ? validFeatures.map(f => f.name).join(', ') : 'No Features Selected';
+                    const taskName = `Exploratory Test - ${featureNames}`;
+                    
+                    const newTask = new ExploratoryTestTask(taskId, taskName, this.project, validFeatures, oldTask.size);
 
-                // Add to project backlog
-                this.project.addToBacklog(newTask);
-                newTasks.push(newTask);
+                    // Add to project backlog
+                    this.project.addToBacklog(newTask);
+                    newTasks.push(newTask);
+                }
+            } else {
+                // For knowledge gathering, all features in the project are always available
+                const validFeatures = oldTask.features.filter(oldFeature => 
+                    availableFeatures.some(availFeature => availFeature.id === oldFeature.id)
+                );
+                
+                if (validFeatures.length > 0) {
+                    // Create new test task with same properties
+                    const taskId = this.project.getNextId();
+                    const featureNames = validFeatures.map(f => f.name).join(', ');
+                    const taskName = `Knowledge Gathering - ${featureNames}`;
+                    
+                    const newTask = new GatherKnowledgeTask(taskId, taskName, this.project, validFeatures, oldTask.size);
+
+                    // Add to project backlog
+                    this.project.addToBacklog(newTask);
+                    newTasks.push(newTask);
+                }
             }
         });
         
@@ -656,68 +498,520 @@ class GameUI {
         return [];
     }
 
-    // Update feature checkbox options when test type changes
+    // This method is no longer needed
     updateFormFeatureOptions() {
-        const testTypeRadio = document.querySelector('input[name="test-type"]:checked');
-        const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById('form-test-feature');
+        // Not used anymore
+    }
+
+    autoSaveTestTask(taskId) {
+        console.log(`autoSaveTestTask called for task ${taskId}`);
         
-        if (!featureContainer) return;
+        const testTypeRadio = document.querySelector(`input[name="test-type-${taskId}"]:checked`);
+        const testType = testTypeRadio ? testTypeRadio.value : null;
+        const featureContainer = document.getElementById(`test-feature-${taskId}`);
+        const effortValue = document.getElementById(`test-effort-${taskId}`).value;
+        const errorsDiv = document.getElementById(`form-errors-${taskId}`);
+
+        console.log(`Task ${taskId}: testType=${testType}, featureContainer exists=${!!featureContainer}`);
+
+        // Clear previous errors
+        errorsDiv.innerHTML = '';
+        errorsDiv.classList.remove('show');
+
+        // Get selected feature IDs from checkboxes - be very specific about which container
+        const selectedFeatureIds = Array.from(featureContainer.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => parseInt(checkbox.value))
+            .filter(id => !isNaN(id));
+
+        console.log(`Task ${taskId}: selected features=${selectedFeatureIds}`);
+
+        // Parse effort
+        const effort = parseInt(effortValue);
+
+        // Find the task
+        const task = this.project.getTaskById(taskId);
+        if (!task) {
+            console.log(`Task ${taskId}: task not found in project!`);
+            return;
+        }
+
+        console.log(`Task ${taskId}: current task type=${task.getType()}, current features=${task.features.map(f => f.id)}`);
+
+        // Only validate effort - features are optional for knowledge gathering but required for exploratory
+        if (!effortValue || isNaN(effort) || effort <= 0) {
+            console.log(`Task ${taskId}: validation failed - invalid effort`);
+            errorsDiv.innerHTML = 'Please enter a valid effort amount';
+            errorsDiv.classList.add('show');
+            this.updateExecuteButtonState();
+            return;
+        }
+        if (effort > this.currentSprint.remainingTestEffort() + task.size) {
+            console.log(`Task ${taskId}: validation failed - effort exceeds capacity`);
+            errorsDiv.innerHTML = `Effort cannot exceed remaining capacity (${this.currentSprint.remainingTestEffort() + task.size})`;
+            errorsDiv.classList.add('show');
+            this.updateExecuteButtonState();
+            return;
+        }
+        
+        // Validate that exploratory testing has at least one feature selected
+        if (testType === 'exploratory' && selectedFeatureIds.length === 0) {
+            console.log(`Task ${taskId}: validation failed - exploratory testing requires features`);
+            errorsDiv.innerHTML = 'Exploratory testing requires at least one feature to be selected';
+            errorsDiv.classList.add('show');
+            this.updateExecuteButtonState();
+            return;
+        }
+
+        console.log(`Task ${taskId}: validation passed`);
+
+        // Find the new features from the appropriate source (empty array is valid)
+        const newFeatures = [];
+        const availableFeaturesForNewType = this.getAvailableFeaturesForTestType(testType);
+        
+        console.log(`Task ${taskId}: available features for type ${testType}:`, availableFeaturesForNewType.map(f => `${f.id}:${f.name}`));
+        
+        for (const featureId of selectedFeatureIds) {
+            // Only include features that are actually available for the new test type
+            const newFeature = availableFeaturesForNewType.find(f => f.id === featureId);
+            if (newFeature) {
+                newFeatures.push(newFeature);
+                console.log(`Task ${taskId}: including feature ${featureId}:${newFeature.name} in newFeatures`);
+            } else {
+                console.log(`Task ${taskId}: skipping feature ${featureId} - not available for test type ${testType}`);
+            }
+        }
+
+        console.log(`Task ${taskId}: found ${newFeatures.length} valid features for new task`);
+
+        // Check if we need to create a new task (type changed) or just update features
+        const currentTestType = task.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
+        const typeChanged = testType !== currentTestType;
+
+        console.log(`Task ${taskId}: type changed from ${currentTestType} to ${testType}: ${typeChanged}`);
+
+        if (typeChanged) {
+            console.log(`Task ${taskId}: type changed from ${currentTestType} to ${testType}, recreating task`);
+            // Only recreate task when type changes
+            const oldTaskIndex = this.currentSprint._testTasks.findIndex(t => t.id === taskId);
+            
+            // Remove the old task
+            this.currentSprint._testTasks = this.currentSprint._testTasks.filter(t => t.id !== taskId);
+            this.project.removeFromBacklog(taskId);
+
+            // Create a new task with updated properties
+            const newTaskId = this.project.getNextId();
+            const featureNames = newFeatures.length > 0 ? newFeatures.map(f => f.name).join(', ') : 'No Features';
+            const taskName = `${testType === 'exploratory' ? 'Exploratory Test' : 'Knowledge Gathering'} - ${featureNames}`;
+            
+            console.log(`Task ${taskId}: creating new task ${newTaskId} with name "${taskName}" and features [${newFeatures.map(f => f.id).join(',')}]`);
+            
+            let newTask;
+            if (testType === 'exploratory') {
+                newTask = new ExploratoryTestTask(newTaskId, taskName, this.project, newFeatures, effort);
+            } else {
+                newTask = new GatherKnowledgeTask(newTaskId, taskName, this.project, newFeatures, effort);
+            }
+
+            // Add to project backlog
+            this.project.addToBacklog(newTask);
+            
+            // Insert the new task at the same position in the sprint
+            if (oldTaskIndex >= 0) {
+                this.currentSprint._testTasks.splice(oldTaskIndex, 0, newTask);
+            } else {
+                this.currentSprint.addTestTask(newTask);
+            }
+
+            console.log(`Task ${taskId}: new task ${newTaskId} created and added to sprint`);
+
+            // Instead of recreating the entire form, just update the radio buttons and trigger feature update
+            const oldForm = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (oldForm) {
+                console.log(`Task ${taskId}: updating DOM elements to use new task ID ${newTaskId}`);
+                // Update the form's dataset to the new task ID
+                oldForm.dataset.taskId = newTask.id;
+                
+                // Update radio button names and IDs to match new task ID
+                const radioButtons = oldForm.querySelectorAll('input[type="radio"]');
+                radioButtons.forEach(radio => {
+                    const oldName = radio.name;
+                    const oldId = radio.id;
+                    radio.name = oldName.replace(taskId, newTask.id);
+                    radio.id = oldId.replace(taskId, newTask.id);
+                    radio.setAttribute('onchange', `gameUI.updateTestTaskFeatureOptions(${newTask.id}); gameUI.autoSaveTestTask(${newTask.id})`);
+                    
+                    // Set checked state based on new task type
+                    radio.checked = radio.value === testType;
+                });
+                
+                // Update radio button labels
+                const radioLabels = oldForm.querySelectorAll('label[for*="action-"]');
+                radioLabels.forEach(label => {
+                    const oldFor = label.getAttribute('for');
+                    label.setAttribute('for', oldFor.replace(taskId, newTask.id));
+                });
+                
+                // Update feature container ID
+                const featureContainer = oldForm.querySelector('.feature-checkboxes');
+                if (featureContainer) {
+                    featureContainer.id = `test-feature-${newTask.id}`;
+                }
+                
+                // Update effort input
+                const effortInput = oldForm.querySelector('input[type="range"]');
+                if (effortInput) {
+                    effortInput.id = `test-effort-${newTask.id}`;
+                    effortInput.value = effort;
+                    effortInput.setAttribute('onchange', `gameUI.autoSaveTestTask(${newTask.id})`);
+                    effortInput.setAttribute('oninput', `gameUI.updateEffortDisplay(${newTask.id})`);
+                }
+                
+                // Update effort display
+                const effortDisplay = oldForm.querySelector('.effort-display');
+                if (effortDisplay) {
+                    effortDisplay.id = `effort-display-${newTask.id}`;
+                    effortDisplay.textContent = effort;
+                }
+                
+                // Update delete button
+                const deleteButton = oldForm.querySelector('.btn-danger');
+                if (deleteButton) {
+                    deleteButton.setAttribute('onclick', `gameUI.deleteTestTask(${newTask.id})`);
+                }
+                
+                // Update errors div
+                const errorsDiv = oldForm.querySelector('.form-errors');
+                if (errorsDiv) {
+                    errorsDiv.id = `form-errors-${newTask.id}`;
+                }
+                
+                // Now update the feature options for the new task type
+                // Don't call updateTestTaskFeatureOptions here since it was already called from the radio button
+                // this.updateTestTaskFeatureOptions(newTask.id);
+                
+                // Update all feature checkbox onchange attributes to use the new task ID
+                // and set the selected features based on what's actually valid for the new task type
+                setTimeout(() => {
+                    console.log(`Task ${taskId}: updating feature checkboxes for new task ${newTaskId}`);
+                    const featureCheckboxes = oldForm.querySelectorAll('.feature-checkboxes input[type="checkbox"]');
+                    featureCheckboxes.forEach(checkbox => {
+                        checkbox.setAttribute('onchange', `gameUI.autoSaveTestTask(${newTask.id})`);
+                    });
+                    
+                    // Only set features that are actually in the newFeatures array (which are validated for the new task type)
+                    newFeatures.forEach(feature => {
+                        const checkbox = document.getElementById(`feature-${newTask.id}-${feature.id}`);
+                        if (checkbox && !checkbox.disabled) {
+                            console.log(`Task ${taskId}: checking feature ${feature.id}:${feature.name} for new task ${newTaskId}`);
+                            checkbox.checked = true;
+                        } else {
+                            console.log(`Task ${taskId}: could not check feature ${feature.id}:${feature.name} for new task ${newTaskId} (checkbox=${!!checkbox}, disabled=${checkbox?.disabled})`);
+                        }
+                    });
+                }, 10);
+            }
+            
+            // Update effort counters only
+            this.updateEffortCounters();
+            
+            // Re-validate all test task cards after any change
+            this.validateAllTestTasks();
+            
+            // Update execute button state since validation passed
+            this.updateExecuteButtonState();
+        } else {
+            console.log(`Task ${taskId}: updating features in place (same type)`);
+            
+            // Since features property is read-only, we need to recreate the task even when just features change
+            const oldTaskIndex = this.currentSprint._testTasks.findIndex(t => t.id === taskId);
+            
+            // Remove the old task
+            this.currentSprint._testTasks = this.currentSprint._testTasks.filter(t => t.id !== taskId);
+            this.project.removeFromBacklog(taskId);
+
+            // Create a new task with updated properties (keeping same ID and type)
+            const featureNames = newFeatures.length > 0 ? newFeatures.map(f => f.name).join(', ') : 'No Features';
+            const taskName = `${testType === 'exploratory' ? 'Exploratory Test' : 'Knowledge Gathering'} - ${featureNames}`;
+            
+            console.log(`Task ${taskId}: recreating task with same ID and type, new features [${newFeatures.map(f => f.id).join(',')}]`);
+            
+            let newTask;
+            if (testType === 'exploratory') {
+                newTask = new ExploratoryTestTask(taskId, taskName, this.project, newFeatures, effort);
+            } else {
+                newTask = new GatherKnowledgeTask(taskId, taskName, this.project, newFeatures, effort);
+            }
+
+            // Add to project backlog
+            this.project.addToBacklog(newTask);
+            
+            // Insert the new task at the same position in the sprint
+            if (oldTaskIndex >= 0) {
+                this.currentSprint._testTasks.splice(oldTaskIndex, 0, newTask);
+            } else {
+                this.currentSprint.addTestTask(newTask);
+            }
+            
+            console.log(`Task ${taskId}: task updated with new features`);
+            
+            // Update effort counters only (no DOM changes needed since ID stays the same)
+            this.updateEffortCounters();
+            
+            // Re-validate all test task cards after any change
+            this.validateAllTestTasks();
+            
+            // Update execute button state since validation passed
+            this.updateExecuteButtonState();
+        }
+    }
+
+    updateTestTaskFeatureOptions(taskId) {
+        console.log(`updateTestTaskFeatureOptions called for task ${taskId}`);
+        
+        const testTypeRadio = document.querySelector(`input[name="test-type-${taskId}"]:checked`);
+        const testType = testTypeRadio ? testTypeRadio.value : null;
+        const featureContainer = document.getElementById(`test-feature-${taskId}`);
+        
+        console.log(`Task ${taskId}: current test type = ${testType}`);
+        
+        if (!featureContainer) {
+            console.log(`Task ${taskId}: featureContainer not found`);
+            return;
+        }
         
         const availableFeatures = this.getAvailableFeaturesForTestType(testType);
         const allFeatures = this.project.backlog.filter(task => task.getType() === 'Feature');
         
-        // Clear existing checkboxes
-        featureContainer.innerHTML = '';
+        console.log(`Task ${taskId}: available features for ${testType}:`, availableFeatures.map(f => `${f.id}:${f.name}`));
+        console.log(`Task ${taskId}: all features in project:`, allFeatures.map(f => `${f.id}:${f.name}(done:${f.isDone()})`));
         
-        if (allFeatures.length === 0) {
-            featureContainer.innerHTML = '<div class="no-features">No features in project</div>';
-            return;
+        // Check if checkboxes already exist
+        const existingCheckboxes = featureContainer.querySelectorAll('input[type="checkbox"]');
+        console.log(`Task ${taskId}: found ${existingCheckboxes.length} existing checkboxes`);
+        
+        let featuresWereCleared = false;
+        
+        if (existingCheckboxes.length === 0) {
+            console.log(`Task ${taskId}: creating checkboxes for the first time`);
+            // No checkboxes exist yet, create them (initial setup)
+            if (allFeatures.length === 0) {
+                featureContainer.innerHTML = '<div class="no-features">No features in project</div>';
+                return;
+            }
+            
+            // Create all checkboxes for the first time
+            allFeatures.forEach(feature => {
+                const isAvailable = availableFeatures.some(af => af.id === feature.id);
+                
+                // Find the current task to check if this feature is already selected
+                const task = this.project.getTaskById(taskId);
+                const isSelected = task && task.features && task.features.some(f => f.id === feature.id);
+                
+                console.log(`Task ${taskId}: creating checkbox for feature ${feature.id}:${feature.name}, available=${isAvailable}, isSelected=${isSelected}`);
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = `feature-checkbox${!isAvailable ? ' disabled' : ''}`;
+                checkboxDiv.innerHTML = `
+                    <input type="checkbox" id="feature-${taskId}-${feature.id}" value="${feature.id}" ${!isAvailable ? 'disabled' : ''} ${isSelected && isAvailable ? 'checked' : ''} onchange="gameUI.autoSaveTestTask(${taskId})">
+                    <label for="feature-${taskId}-${feature.id}">${feature.name}</label>
+                `;
+                featureContainer.appendChild(checkboxDiv);
+            });
+        } else {
+            console.log(`Task ${taskId}: updating existing checkboxes`);
+            // Checkboxes exist, just update their availability and state
+            const task = this.project.getTaskById(taskId);
+            
+            allFeatures.forEach(feature => {
+                const checkbox = featureContainer.querySelector(`input[value="${feature.id}"]`);
+                const checkboxDiv = checkbox ? checkbox.closest('.feature-checkbox') : null;
+                
+                if (checkbox && checkboxDiv) {
+                    const isAvailable = availableFeatures.some(af => af.id === feature.id);
+                    const isSelected = task && task.features && task.features.some(f => f.id === feature.id);
+                    const wasChecked = checkbox.checked;
+                    
+                    console.log(`Task ${taskId}: updating feature ${feature.id}:${feature.name}, available=${isAvailable}, isSelected=${isSelected}, wasChecked=${wasChecked}`);
+                    
+                    // Update disabled state
+                    checkbox.disabled = !isAvailable;
+                    
+                    // Update checked state to match task state (but only if available)
+                    if (isAvailable) {
+                        checkbox.checked = isSelected;
+                    } else {
+                        // Uncheck if it becomes unavailable
+                        if (checkbox.checked) {
+                            checkbox.checked = false;
+                            featuresWereCleared = true;
+                            console.log(`Task ${taskId}: unchecked feature ${feature.id}:${feature.name} because it became unavailable`);
+                        }
+                    }
+                    
+                    // Update CSS class
+                    if (isAvailable) {
+                        checkboxDiv.classList.remove('disabled');
+                    } else {
+                        checkboxDiv.classList.add('disabled');
+                    }
+                }
+            });
         }
+
+        console.log(`Task ${taskId}: feature options updated, available features: ${availableFeatures.length}, featuresWereCleared: ${featuresWereCleared}`);
         
-        // Add checkboxes for all features
-        allFeatures.forEach(feature => {
-            const isAvailable = availableFeatures.some(af => af.id === feature.id);
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = `feature-checkbox${!isAvailable ? ' disabled' : ''}`;
-            checkboxDiv.innerHTML = `
-                <input type="checkbox" id="feature-${feature.id}" value="${feature.id}" ${!isAvailable ? 'disabled' : ''}>
-                <label for="feature-${feature.id}">${feature.name}</label>
-            `;
-            featureContainer.appendChild(checkboxDiv);
+        // Re-validate this specific task after updating feature options to clear any stale validation errors
+        this.validateSingleTestTask(taskId);
+        
+        // If we cleared some features due to them becoming unavailable, we don't need to trigger autoSave
+        // because the radio button onchange will handle it
+        return featuresWereCleared;
+    }
+
+    updateEffortDisplay(taskId) {
+        const effortSlider = document.getElementById(`test-effort-${taskId}`);
+        const effortDisplay = document.getElementById(`effort-display-${taskId}`);
+        
+        if (effortSlider && effortDisplay) {
+            effortDisplay.textContent = effortSlider.value;
+        }
+    }
+
+    hasTestTaskValidationErrors() {
+        // Check if any test task form has validation errors
+        const errorDivs = document.querySelectorAll('.form-errors.show');
+        return errorDivs.length > 0;
+    }
+
+    updateExecuteButtonState() {
+        const executeButton = document.getElementById('execute-sprint');
+        if (executeButton) {
+            const hasErrors = this.hasTestTaskValidationErrors();
+            executeButton.disabled = hasErrors;
+            
+            if (hasErrors) {
+                executeButton.title = 'Fix validation errors in test tasks before executing sprint';
+            } else {
+                executeButton.title = '';
+            }
+        }
+    }
+
+    validateAllTestTasks() {
+        // Re-validate all test tasks after any change to ensure capacity constraints are correct
+        if (!this.currentSprint) return;
+        
+        this.currentSprint.testTasks.forEach(task => {
+            const taskId = task.id;
+            const effortValue = document.getElementById(`test-effort-${taskId}`)?.value;
+            const errorsDiv = document.getElementById(`form-errors-${taskId}`);
+            
+            if (!effortValue || !errorsDiv) return;
+            
+            // Clear previous errors
+            errorsDiv.innerHTML = '';
+            errorsDiv.classList.remove('show');
+            
+            // Parse effort
+            const effort = parseInt(effortValue);
+            
+            // Validate effort
+            if (!effortValue || isNaN(effort) || effort <= 0) {
+                errorsDiv.innerHTML = 'Please enter a valid effort amount';
+                errorsDiv.classList.add('show');
+                return;
+            }
+            
+            // Check capacity constraint
+            if (effort > this.currentSprint.remainingTestEffort() + task.size) {
+                errorsDiv.innerHTML = `Effort cannot exceed remaining capacity (${this.currentSprint.remainingTestEffort() + task.size})`;
+                errorsDiv.classList.add('show');
+                return;
+            }
+            
+            // Validate that exploratory testing has at least one feature selected
+            const testType = task.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
+            if (testType === 'exploratory') {
+                const featureContainer = document.getElementById(`test-feature-${taskId}`);
+                if (featureContainer) {
+                    const selectedFeatures = featureContainer.querySelectorAll('input[type="checkbox"]:checked');
+                    if (selectedFeatures.length === 0) {
+                        errorsDiv.innerHTML = 'Exploratory testing requires at least one feature to be selected';
+                        errorsDiv.classList.add('show');
+                        return;
+                    }
+                }
+            }
         });
     }
 
-    // Update feature checkbox options for edit form
-    updateEditFeatureOptions(taskId) {
-        const testTypeRadio = document.querySelector(`input[name="edit-test-type-${taskId}"]:checked`);
-        const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById(`edit-test-feature-${taskId}`);
+    validateSingleTestTask(taskId) {
+        console.log(`validateSingleTestTask called for task ${taskId}`);
+        // Validate a single test task to clear stale validation errors when test type changes
+        const effortValue = document.getElementById(`test-effort-${taskId}`)?.value;
+        const errorsDiv = document.getElementById(`form-errors-${taskId}`);
         
-        if (!featureContainer) return;
-        
-        const availableFeatures = this.getAvailableFeaturesForTestType(testType);
-        const allFeatures = this.project.backlog.filter(task => task.getType() === 'Feature');
-        
-        // Clear existing checkboxes
-        featureContainer.innerHTML = '';
-        
-        if (allFeatures.length === 0) {
-            featureContainer.innerHTML = '<div class="no-features">No features in project</div>';
+        if (!effortValue || !errorsDiv) {
+            console.log(`Task ${taskId}: validation skipped - missing elements`);
             return;
         }
         
-        // Add checkboxes for all features
-        allFeatures.forEach(feature => {
-            const isAvailable = availableFeatures.some(af => af.id === feature.id);
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = `feature-checkbox${!isAvailable ? ' disabled' : ''}`;
-            checkboxDiv.innerHTML = `
-                <input type="checkbox" id="edit-feature-${taskId}-${feature.id}" value="${feature.id}" ${!isAvailable ? 'disabled' : ''}>
-                <label for="edit-feature-${taskId}-${feature.id}">${feature.name}</label>
-            `;
-            featureContainer.appendChild(checkboxDiv);
-        });
+        // Clear previous errors
+        errorsDiv.innerHTML = '';
+        errorsDiv.classList.remove('show');
+        
+        // Parse effort
+        const effort = parseInt(effortValue);
+        
+        // Get the current test type from the DOM (not from the task object)
+        const testTypeRadio = document.querySelector(`input[name="test-type-${taskId}"]:checked`);
+        const testType = testTypeRadio ? testTypeRadio.value : null;
+        
+        console.log(`Task ${taskId}: validating with test type ${testType}, effort ${effort}`);
+        
+        // Find the task for capacity validation
+        const task = this.project.getTaskById(taskId);
+        if (!task) {
+            console.log(`Task ${taskId}: validation failed - task not found`);
+            return;
+        }
+        
+        // Validate effort
+        if (!effortValue || isNaN(effort) || effort <= 0) {
+            console.log(`Task ${taskId}: validation failed - invalid effort`);
+            errorsDiv.innerHTML = 'Please enter a valid effort amount';
+            errorsDiv.classList.add('show');
+            this.updateExecuteButtonState();
+            return;
+        }
+        
+        // Check capacity constraint
+        if (effort > this.currentSprint.remainingTestEffort() + task.size) {
+            console.log(`Task ${taskId}: validation failed - effort exceeds capacity`);
+            errorsDiv.innerHTML = `Effort cannot exceed remaining capacity (${this.currentSprint.remainingTestEffort() + task.size})`;
+            errorsDiv.classList.add('show');
+            this.updateExecuteButtonState();
+            return;
+        }
+        
+        // Validate that exploratory testing has at least one feature selected
+        if (testType === 'exploratory') {
+            const featureContainer = document.getElementById(`test-feature-${taskId}`);
+            if (featureContainer) {
+                const selectedFeatures = featureContainer.querySelectorAll('input[type="checkbox"]:checked');
+                console.log(`Task ${taskId}: exploratory validation - ${selectedFeatures.length} features selected`);
+                if (selectedFeatures.length === 0) {
+                    console.log(`Task ${taskId}: validation failed - exploratory requires features`);
+                    errorsDiv.innerHTML = 'Exploratory testing requires at least one feature to be selected';
+                    errorsDiv.classList.add('show');
+                    this.updateExecuteButtonState();
+                    return;
+                }
+            }
+        }
+        
+        console.log(`Task ${taskId}: validation passed`);
+        // Update execute button state after validation
+        this.updateExecuteButtonState();
     }
 }
 
