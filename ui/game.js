@@ -153,16 +153,42 @@ class GameUI {
                            task.getType() === 'GatherKnowledgeTask' ? 'Knowledge' :
                            task.getType();
 
+        let taskDetails = '';
+        
+        if (task.getType() === 'Feature') {
+            // Show attributes based on knowledge level
+            if (task.knowledge > 0) {
+                taskDetails += `<div class="task-detail">Size: ${task.size}</div>`;
+            }
+            if (task.knowledge > 3) {
+                taskDetails += `<div class="task-detail">Complexity: ${task.complexity}</div>`;
+            }
+        } else if (task.getType() === 'Defect') {
+            // Show defect attributes based on knowledge level
+            if (task.knowledge > 0) {
+                taskDetails += `<div class="task-detail">Size: ${task.size}</div>`;
+            }
+            if (task.knowledge > 3) {
+                taskDetails += `<div class="task-detail">Complexity: ${task.complexity}</div>`;
+            }
+            taskDetails += `<div class="task-detail">Severity: ${task.severity}</div>`;
+        } else {
+            // Non-feature/defect tasks show all attributes
+            taskDetails += `<div class="task-detail">Size: ${task.size}</div>`;
+            taskDetails += `<div class="task-detail">Complexity: ${task.complexity}</div>`;
+        }
+        
+        if (task.getType().includes('TestTask') && task.features) {
+            taskDetails += `<div class="task-detail">Features: ${task.features.map(f => f.name).join(', ')}</div>`;
+        }
+
         card.innerHTML = `
             <div class="task-header">
                 <div class="task-title">${task.name}</div>
                 <div class="task-type ${task.getType().toLowerCase().replace('task', '-task')}">${typeDisplay}</div>
             </div>
             <div class="task-details">
-                <div class="task-detail">Size: ${task.size}</div>
-                <div class="task-detail">Complexity: ${task.complexity}</div>
-                ${task.getType() === 'Defect' ? `<div class="task-detail">Severity: ${task.severity}</div>` : ''}
-                ${task.getType().includes('TestTask') && task.features ? `<div class="task-detail">Features: ${task.features.map(f => f.name).join(', ')}</div>` : ''}
+                ${taskDetails}
             </div>
         `;
 
@@ -303,45 +329,46 @@ class GameUI {
         const container = cardElement.parentNode;
         const form = document.createElement('div');
         form.className = 'task-card test-task-form';
+        form.dataset.editingTaskId = task.id;
 
         const currentTestType = task.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
 
         form.innerHTML = `
             <div class="form-group">
                 <label>Action</label>
-                <div id="edit-test-type" class="action-checkboxes">
+                <div id="edit-test-type-${task.id}" class="action-checkboxes">
                     <div class="action-checkbox">
-                        <input type="radio" id="edit-action-exploratory" name="edit-test-type" value="exploratory" onchange="gameUI.updateEditFeatureOptions()" ${currentTestType === 'exploratory' ? 'checked' : ''}>
-                        <label for="edit-action-exploratory">Exploratory Testing</label>
+                        <input type="radio" id="edit-action-exploratory-${task.id}" name="edit-test-type-${task.id}" value="exploratory" onchange="gameUI.updateEditFeatureOptions(${task.id})" ${currentTestType === 'exploratory' ? 'checked' : ''}>
+                        <label for="edit-action-exploratory-${task.id}">Exploratory Testing</label>
                     </div>
                     <div class="action-checkbox">
-                        <input type="radio" id="edit-action-knowledge" name="edit-test-type" value="knowledge" onchange="gameUI.updateEditFeatureOptions()" ${currentTestType === 'knowledge' ? 'checked' : ''}>
-                        <label for="edit-action-knowledge">Knowledge Gathering</label>
+                        <input type="radio" id="edit-action-knowledge-${task.id}" name="edit-test-type-${task.id}" value="knowledge" onchange="gameUI.updateEditFeatureOptions(${task.id})" ${currentTestType === 'knowledge' ? 'checked' : ''}>
+                        <label for="edit-action-knowledge-${task.id}">Knowledge Gathering</label>
                     </div>
                 </div>
             </div>
             <div class="form-group">
                 <label>Features</label>
-                <div id="edit-test-feature" class="feature-checkboxes">
+                <div id="edit-test-feature-${task.id}" class="feature-checkboxes">
                     <!-- Feature checkboxes will be populated here -->
                 </div>
             </div>
             <div class="form-group">
                 <label>Effort</label>
-                <input type="number" id="edit-test-effort" min="1" max="${this.currentSprint.remainingTestEffort() + task.size}" value="${task.size}">
+                <input type="number" id="edit-test-effort-${task.id}" min="1" max="${this.currentSprint.remainingTestEffort() + task.size}" value="${task.size}">
             </div>
             <div class="form-actions">
                 <button class="btn btn-primary" onclick="gameUI.updateTestTask(${task.id})">Save</button>
                 <button class="btn btn-danger" onclick="gameUI.deleteTestTask(${task.id})">Delete</button>
             </div>
-            <div class="form-errors" id="edit-form-errors"></div>
+            <div class="form-errors" id="edit-form-errors-${task.id}"></div>
         `;
 
         container.replaceChild(form, cardElement);
         
         // Populate the feature checkboxes with the correct options and select the current features
-        this.updateEditFeatureOptions();
-        const featureContainer = document.getElementById('edit-test-feature');
+        this.updateEditFeatureOptions(task.id);
+        const featureContainer = document.getElementById(`edit-test-feature-${task.id}`);
         if (featureContainer && task.features && task.features.length > 0) {
             // Check all current features
             task.features.forEach(feature => {
@@ -354,11 +381,11 @@ class GameUI {
     }
 
     updateTestTask(taskId) {
-        const testTypeRadio = document.querySelector('input[name="edit-test-type"]:checked');
+        const testTypeRadio = document.querySelector(`input[name="edit-test-type-${taskId}"]:checked`);
         const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById('edit-test-feature');
-        const effortValue = document.getElementById('edit-test-effort').value;
-        const errorsDiv = document.getElementById('edit-form-errors');
+        const featureContainer = document.getElementById(`edit-test-feature-${taskId}`);
+        const effortValue = document.getElementById(`edit-test-effort-${taskId}`).value;
+        const errorsDiv = document.getElementById(`edit-form-errors-${taskId}`);
 
         // Get selected feature IDs from checkboxes
         const selectedFeatureIds = Array.from(featureContainer.querySelectorAll('input[type="checkbox"]:checked'))
@@ -416,6 +443,9 @@ class GameUI {
         const needsNewTask = testType !== currentTestType || featuresChanged;
 
         if (needsNewTask) {
+            // Find the position of the old task to preserve order
+            const oldTaskIndex = this.currentSprint._testTasks.findIndex(t => t.id === taskId);
+            
             // Remove the old task
             this.currentSprint._testTasks = this.currentSprint._testTasks.filter(t => t.id !== taskId);
             this.project.removeFromBacklog(taskId);
@@ -432,16 +462,22 @@ class GameUI {
                 newTask = new GatherKnowledgeTask(newTaskId, taskName, this.project, newFeatures, effort);
             }
 
-            // Add to project backlog and current sprint
+            // Add to project backlog
             this.project.addToBacklog(newTask);
-            this.currentSprint.addTestTask(newTask);
+            
+            // Insert the new task at the same position in the sprint
+            if (oldTaskIndex >= 0) {
+                this.currentSprint._testTasks.splice(oldTaskIndex, 0, newTask);
+            } else {
+                this.currentSprint.addTestTask(newTask);
+            }
         } else {
             // Only effort changed, just update the size
             task.size = effort;
         }
 
         // Always remove any edit forms and re-render
-        const editForm = document.querySelector('.test-task-form');
+        const editForm = document.querySelector(`[data-editing-task-id="${taskId}"]`);
         if (editForm) {
             editForm.remove();
         }
@@ -465,26 +501,41 @@ class GameUI {
 
         // Store test tasks from current sprint before executing
         const currentTestTasks = [...this.currentSprint.testTasks];
+        
+        // Count defects before sprint execution
+        const defectsBeforeSprint = this.project.backlog.filter(task => task.getType() === 'Defect').length;
 
         // Execute the sprint
         this.currentSprint.done();
         
-        // Start new sprint if there are still tasks in backlog
-        const remainingTasks = this.project.backlog.filter(task => !task.isDone());
-        if (remainingTasks.length > 0) {
+        // Count defects after sprint execution
+        const defectsAfterSprint = this.project.backlog.filter(task => task.getType() === 'Defect').length;
+        const newDefectsCreated = defectsAfterSprint > defectsBeforeSprint;
+        
+        // Check if all features are developed and no features in current sprint
+        const allFeatures = this.project.backlog.filter(task => task.getType() === 'Feature');
+        const doneFeatures = allFeatures.filter(task => task.isDone());
+        const featuresInCurrentSprint = this.currentSprint.devTasks.filter(task => task.getType() === 'Feature');
+        
+        // Game ends only if all features are done, no features in sprint, AND no new defects were created
+        if (doneFeatures.length === allFeatures.length && featuresInCurrentSprint.length === 0 && !newDefectsCreated) {
+            this.endGame();
+        } else {
+            // Start new sprint
             this.sprintNumber++;
             this.startNewSprint();
             
             // Re-create the same test tasks for the new sprint
             this.recreateTestTasks(currentTestTasks);
-        } else {
-            this.endGame();
         }
 
         this.render();
     }
 
     recreateTestTasks(previousTestTasks) {
+        // Recreate all valid tasks first, then add them in order
+        const newTasks = [];
+        
         previousTestTasks.forEach(oldTask => {
             // Check if the features are still available for testing
             const testType = oldTask.getType() === 'ExploratoryTestTask' ? 'exploratory' : 'knowledge';
@@ -508,11 +559,18 @@ class GameUI {
                     newTask = new GatherKnowledgeTask(taskId, taskName, this.project, validFeatures, oldTask.size);
                 }
 
-                // Add to project backlog and current sprint if it fits
+                // Add to project backlog
                 this.project.addToBacklog(newTask);
-                if (newTask.size <= this.currentSprint.remainingTestEffort()) {
-                    this.currentSprint.addTestTask(newTask);
-                }
+                newTasks.push(newTask);
+            }
+        });
+        
+        // Add tasks to sprint in order, respecting capacity
+        let remainingCapacity = this.currentSprint.remainingTestEffort();
+        newTasks.forEach(task => {
+            if (task.size <= remainingCapacity) {
+                this.currentSprint.addTestTask(task);
+                remainingCapacity -= task.size;
             }
         });
     }
@@ -631,10 +689,10 @@ class GameUI {
     }
 
     // Update feature checkbox options for edit form
-    updateEditFeatureOptions() {
-        const testTypeRadio = document.querySelector('input[name="edit-test-type"]:checked');
+    updateEditFeatureOptions(taskId) {
+        const testTypeRadio = document.querySelector(`input[name="edit-test-type-${taskId}"]:checked`);
         const testType = testTypeRadio ? testTypeRadio.value : null;
-        const featureContainer = document.getElementById('edit-test-feature');
+        const featureContainer = document.getElementById(`edit-test-feature-${taskId}`);
         
         if (!featureContainer) return;
         
@@ -655,8 +713,8 @@ class GameUI {
             const checkboxDiv = document.createElement('div');
             checkboxDiv.className = `feature-checkbox${!isAvailable ? ' disabled' : ''}`;
             checkboxDiv.innerHTML = `
-                <input type="checkbox" id="edit-feature-${feature.id}" value="${feature.id}" ${!isAvailable ? 'disabled' : ''}>
-                <label for="edit-feature-${feature.id}">${feature.name}</label>
+                <input type="checkbox" id="edit-feature-${taskId}-${feature.id}" value="${feature.id}" ${!isAvailable ? 'disabled' : ''}>
+                <label for="edit-feature-${taskId}-${feature.id}">${feature.name}</label>
             `;
             featureContainer.appendChild(checkboxDiv);
         });
