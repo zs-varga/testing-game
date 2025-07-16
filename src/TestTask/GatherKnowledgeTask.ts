@@ -4,25 +4,28 @@ import { Feature } from "../Feature.js";
 import { TestFunctions } from "./TestFunctions.js";
 
 export class GatherKnowledgeTask extends TestTask {
-  private _feature: Feature;
+  private _features: Feature[];
 
   constructor(
     id: number,
     name: string,
     project: Project,
-    feature: Feature,
+    features: Feature[],
     size: number = 0
   ) {
     super(id, name, project, size);
-    this._feature = feature;
+    this._features = features;
   }
 
-  get feature(): Feature {
-    return this._feature;
+  get features(): Feature[] {
+    return this._features;
   }
 
   done(): void {
-    TestFunctions.gatherKnowledge(this.project, this.feature, this.size);
+    const effortPerFeature = this.size / this._features.length;
+    this._features.forEach(feature => {
+      TestFunctions.gatherKnowledge(this.project, feature, effortPerFeature);
+    });
     super.done();
   }
 

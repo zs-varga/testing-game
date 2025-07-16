@@ -119,7 +119,7 @@ describe("Sprint Class", () => {
         project.getNextId(),
         "Gather Knowledge",
         project,
-        feature,
+        [feature],
         3
       );
       const result = sprint.addTestTask(testTask);
@@ -143,7 +143,7 @@ describe("Sprint Class", () => {
         project.getNextId(),
         "Gather Knowledge",
         project,
-        feature,
+        [feature],
         3
       );
       sprint.addTestTask(testTask);
@@ -167,7 +167,7 @@ describe("Sprint Class", () => {
         project.getNextId(),
         "Large Test",
         project,
-        feature,
+        [feature],
         20
       );
       expect(() => sprint.addTestTask(largeTestTask)).toThrow(
@@ -191,7 +191,7 @@ describe("Sprint Class", () => {
         testProject.getNextId(),
         "Test 1",
         testProject,
-        feature,
+        [feature],
         6
       );
       testProject.addToBacklog(testTask1);
@@ -202,7 +202,7 @@ describe("Sprint Class", () => {
         testProject.getNextId(),
         "Test 2",
         testProject,
-        feature,
+        [feature],
         4
       );
       testProject.addToBacklog(testTask2);
@@ -296,7 +296,7 @@ describe("Sprint Class", () => {
         project.getNextId(),
         "Test Task",
         project,
-        testFeature,
+        [testFeature],
         5
       );
 

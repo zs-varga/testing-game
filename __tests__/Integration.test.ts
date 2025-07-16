@@ -43,19 +43,19 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       const testSprint = project.newSprint();
       
       // Now create test tasks for the completed features
-      const loginKnowledgeTask = new GatherKnowledgeTask(project.getNextId(), 'Login Knowledge', project, loginFeature, 4);
+      const loginKnowledgeTask = new GatherKnowledgeTask(project.getNextId(), 'Login Knowledge', project, [loginFeature], 4);
       project.addToBacklog(loginKnowledgeTask);
       testSprint.addTestTask(loginKnowledgeTask);
       
-      const dashboardExploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Dashboard Exploratory', project, dashboardFeature, 6);
+      const dashboardExploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Dashboard Exploratory', project, [dashboardFeature], 6);
       project.addToBacklog(dashboardExploratoryTask);
       testSprint.addTestTask(dashboardExploratoryTask);
       
-      const searchExploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Search Exploratory', project, searchFeature, 5);
+      const searchExploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Search Exploratory', project, [searchFeature], 5);
       project.addToBacklog(searchExploratoryTask);
       testSprint.addTestTask(searchExploratoryTask);
       
-      const loginTestTask = new GatherKnowledgeTask(project.getNextId(), 'Login Additional Test', project, loginFeature, 16);
+      const loginTestTask = new GatherKnowledgeTask(project.getNextId(), 'Login Additional Test', project, [loginFeature], 16);
       project.addToBacklog(loginTestTask);
       
       expect(testSprint.remainingTestEffort()).toBe(15); // 30 - 15 = 15
@@ -92,7 +92,7 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       
       // Create separate test sprint for core feature testing
       const testSprint1 = project.newSprint();
-      const coreTestTask = new ExploratoryTestTask(project.getNextId(), 'Core Testing', project, coreFeature, 15);
+      const coreTestTask = new ExploratoryTestTask(project.getNextId(), 'Core Testing', project, [coreFeature], 15);
       testSprint1.addTestTask(coreTestTask);
       testSprint1.done();
       expect(coreTestTask.isDone()).toBe(true);
@@ -159,11 +159,11 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       // Create separate sprint for validation testing
       const validationSprint = project.newSprint();
       
-      const securityValidation = new ExploratoryTestTask(project.getNextId(), 'Security Validation', project, feature, 6);
+      const securityValidation = new ExploratoryTestTask(project.getNextId(), 'Security Validation', project, [feature], 6);
       project.addToBacklog(securityValidation);
       validationSprint.addTestTask(securityValidation);
       
-      const usabilityValidation = new GatherKnowledgeTask(project.getNextId(), 'Usability Validation', project, feature, 4);
+      const usabilityValidation = new GatherKnowledgeTask(project.getNextId(), 'Usability Validation', project, [feature], 4);
       project.addToBacklog(usabilityValidation);
       validationSprint.addTestTask(usabilityValidation);
       
@@ -203,18 +203,18 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       
       // Create new sprint for testing
       const testSprint = smallProject.newSprint();
-      const testTask1 = new GatherKnowledgeTask(smallProject.getNextId(), 'Test 1', smallProject, feature1, 5);
+      const testTask1 = new GatherKnowledgeTask(smallProject.getNextId(), 'Test 1', smallProject, [feature1], 5);
       smallProject.addToBacklog(testTask1);
       testSprint.addTestTask(testTask1);
 
-      const testTask2 = new ExploratoryTestTask(smallProject.getNextId(), 'Test 2', smallProject, feature2, 3);
+      const testTask2 = new ExploratoryTestTask(smallProject.getNextId(), 'Test 2', smallProject, [feature2], 3);
       smallProject.addToBacklog(testTask2);
       testSprint.addTestTask(testTask2);
       
       expect(testSprint.remainingTestEffort()).toBe(0);
       
       // Try to exceed test capacity
-      const testTask3 = new ExploratoryTestTask(smallProject.getNextId(), 'Test 3', smallProject, feature1, 1);
+      const testTask3 = new ExploratoryTestTask(smallProject.getNextId(), 'Test 3', smallProject, [feature1], 1);
       smallProject.addToBacklog(testTask3);
       expect(() => testSprint.addTestTask(testTask3)).toThrow('Sprint: task size exceeds remaining effort');
     });
@@ -235,15 +235,15 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       const testSprint = project.newSprint();
       
       // Multiple knowledge gathering activities
-      const knowledgeTask1 = new GatherKnowledgeTask(project.getNextId(), 'Initial Learning', project, feature, 4);
+      const knowledgeTask1 = new GatherKnowledgeTask(project.getNextId(), 'Initial Learning', project, [feature], 4);
       project.addToBacklog(knowledgeTask1);
       testSprint.addTestTask(knowledgeTask1);
       
-      const knowledgeTask2 = new GatherKnowledgeTask(project.getNextId(), 'Deep Dive', project, feature, 6);
+      const knowledgeTask2 = new GatherKnowledgeTask(project.getNextId(), 'Deep Dive', project, [feature], 6);
       project.addToBacklog(knowledgeTask2);
       testSprint.addTestTask(knowledgeTask2);
 
-      const exploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Exploration', project, feature, 8);
+      const exploratoryTask = new ExploratoryTestTask(project.getNextId(), 'Exploration', project, [feature], 8);
       project.addToBacklog(exploratoryTask);
       testSprint.addTestTask(exploratoryTask);
       

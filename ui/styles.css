@@ -304,6 +304,70 @@ body {
     box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
 }
 
+/* Multi-select styling */
+.form-group select[multiple] {
+    height: 120px;
+    overflow-y: auto;
+}
+
+.form-group small {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Feature checkboxes styling */
+.feature-checkboxes {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.5rem;
+    background: #fff;
+}
+
+.feature-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.feature-checkbox:last-child {
+    margin-bottom: 0;
+}
+
+.feature-checkbox input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.feature-checkbox label {
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+.feature-checkbox.disabled {
+    opacity: 0.5;
+}
+
+.feature-checkbox.disabled input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+.feature-checkbox.disabled label {
+    color: #999;
+    cursor: not-allowed;
+}
+
+.no-features {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
 .form-actions {
     display: flex;
     gap: 0.5rem;
@@ -328,6 +392,28 @@ body {
 
 .form-errors.show {
     display: block;
+}
+
+/* Action checkboxes styling */
+.action-checkboxes {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.action-checkbox input[type="radio"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.action-checkbox label {
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin: 0;
 }
 
 /* Responsive Design */

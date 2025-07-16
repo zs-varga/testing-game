@@ -4,30 +4,37 @@ import { Project } from "../Project.js";
 import { Feature } from "../Feature.js";
 
 export class ExploratoryTestTask extends TestTask {
-  private _feature: Feature;
+  private _features: Feature[];
 
   constructor(
     id: number,
     name: string,
     project: Project,
-    feature: Feature,
+    features: Feature[],
     size: number = 0
   ) {
     super(id, name, project, size);
-    this._feature = feature;
+    this._features = features;
   }
 
-  get feature(): Feature {
-    return this._feature;
+  get features(): Feature[] {
+    return this._features;
   }
 
   done(): void {
-    // half the effort is used to increase knowledge
-    TestFunctions.gatherKnowledge(this.project, this.feature, this.size / 2);
+    // Distribute effort evenly across all features
+    const effortPerFeature = this.size / this._features.length;
+    const knowledgeEffortPerFeature = effortPerFeature / 2;
+    const defectEffortPerFeature = effortPerFeature / 4;
 
-    // the other half is used to find defects
-    TestFunctions.findDefects(this.project, this.feature, "functionality", this.size / 4);
-    TestFunctions.findDefects(this.project, this.feature, "usability", this.size / 4);
+    this._features.forEach(feature => {
+      // half the effort per feature is used to increase knowledge
+      TestFunctions.gatherKnowledge(this.project, feature, knowledgeEffortPerFeature);
+
+      // the other half is used to find defects (split between functionality and usability)
+      TestFunctions.findDefects(this.project, feature, "functionality", defectEffortPerFeature);
+      TestFunctions.findDefects(this.project, feature, "usability", defectEffortPerFeature);
+    });
     
     super.done();
   }

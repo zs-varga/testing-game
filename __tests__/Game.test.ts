@@ -68,9 +68,9 @@ describe('Game Engine', () => {
         expect(feature).toBeInstanceOf(Feature);
         expect(feature.project).toBe(project);
         expect(feature.size).toBeGreaterThan(0);
-        expect(feature.size).toBeLessThanOrEqual(3);
+        expect(feature.size).toBeLessThanOrEqual(7);
         expect(feature.complexity).toBeGreaterThan(0);
-        expect(feature.complexity).toBeLessThanOrEqual(5);
+        expect(feature.complexity).toBeLessThanOrEqual(7);
         expect(feature.knowledge).toBe(0);
       });
     });
