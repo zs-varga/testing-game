@@ -1,76 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testing Game</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="app">
-        <header class="app-header">
-            <h1>Testing Game</h1>
-            <div class="sprint-controls">
-                <span id="sprint-info">Sprint 1</span>
-                <button id="execute-sprint" class="btn btn-primary">Execute Sprint</button>
-            </div>
-        </header>
-
-        <div class="tabs">
-            <button class="tab-button active" data-tab="planning">Sprint Planning</button>
-            <button class="tab-button" data-tab="statistics" disabled>Statistics (Coming Soon)</button>
-        </div>
-
-        <div id="planning-tab" class="tab-content active">
-            <div class="board">
-                <div class="column" id="backlog-column">
-                    <div class="column-header">
-                        <h3>Backlog</h3>
-                        <span class="effort-sum" id="backlog-effort">0 effort</span>
-                    </div>
-                    <div class="column-content" id="backlog-tasks">
-                        <!-- Backlog tasks will be populated here -->
-                    </div>
-                </div>
-
-                <div class="column" id="sprint-column">
-                    <div class="column-header">
-                        <h3>Current Sprint</h3>
-                        <span class="effort-sum" id="sprint-effort">0 effort</span>
-                    </div>
-                    <div class="column-content" id="sprint-tasks">
-                        <!-- Sprint tasks will be populated here -->
-                    </div>
-                </div>
-
-                <div class="column" id="test-column">
-                    <div class="column-header">
-                        <h3>Test Tasks</h3>
-                        <span class="effort-sum" id="test-effort">0 effort</span>
-                        <button id="add-test-task" class="btn btn-small">+ Add Test Task</button>
-                    </div>
-                    <div class="column-content" id="test-tasks">
-                        <!-- Test tasks will be populated here -->
-                    </div>
-                </div>
-
-                <div class="column" id="done-column">
-                    <div class="column-header">
-                        <h3>Done</h3>
-                        <span class="effort-sum" id="done-effort">0 effort</span>
-                    </div>
-                    <div class="column-content" id="done-tasks">
-                        <!-- Done tasks will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="statistics-tab" class="tab-content">
-            <p>Statistics and past sprints will be available here soon...</p>
-        </div>
-    </div>
-
-    <script type="module" src="game.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testing Game UI (React)</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

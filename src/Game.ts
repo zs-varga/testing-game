@@ -241,7 +241,8 @@ export class Game implements IGame {
   }
 
   initializeProject(project: Project): void {
-    // Generate features for the specified project
+    project.devEffort = 10;
+    project.testEffort = 10;
     this.generateFeatures(project, 5);
   }
 }
