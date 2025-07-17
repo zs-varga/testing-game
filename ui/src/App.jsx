@@ -117,12 +117,11 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
 
   return (
     <div className="task-card test-task">
-      <div className="task-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 0, marginBottom: 0 }}>
-        <span style={{ fontWeight: 600, color: '#333', fontSize: '0.9rem', lineHeight: 1.3, display: 'flex', alignItems: 'center', height: '28px' }}>Test Task</span>
+      <div className="task-header">
+        <span className="test-task-title">Test Task</span>
         <button
           className="delete-task-btn"
           title="Delete Task"
-          style={{ background: 'none', border: 'none', color: '#dc3545', fontSize: '1.1em', cursor: 'pointer', padding: '2px 8px', borderRadius: '50%', marginLeft: 'auto', height: '28px', display: 'flex', alignItems: 'center' }}
           onClick={onDelete}
         >
           ×
@@ -131,7 +130,7 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
       <div className="task-details">
         <div className="field-group vertical">
           <label className="field-label">Effort</label>
-          <div className="effort-slider-container" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', width: '100%' }}>
+          <div className="effort-slider-container">
             <input
               type="range"
               min={1}
@@ -139,9 +138,8 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
               value={task.effort}
               onChange={e => onChange({ ...task, effort: Number(e.target.value) })}
               className="effort-slider"
-              style={{ width: '90%', maxWidth: '220px', accentColor: '#3366ff' }}
             />
-            <span className="effort-label" style={{ color: '#3366ff', fontWeight: 'bold', minWidth: '15px', textAlign: 'center'}}>{task.effort}</span>
+            <span className="effort-label">{task.effort}</span>
           </div>
         </div>
         <div className="field-group vertical">
