@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import { FeatureCard, DefectCard } from "./Card";
-import { startGame, startSprint } from "./game-engine";
+import { startGame } from "./game-engine";
+import { TestTask } from "../../src/TestTask/TestTask";
+import { ExploratoryTestTask } from "../../src/TestTask/ExploratoryTestTask";
+import { GatherKnowledgeTask } from "../../src/TestTask/GatherKnowledgeTask";
+import { Feature } from "../../src/Feature";
 
 const TABS = [
   { key: "planning", label: "Sprint Planning" },
@@ -10,40 +14,93 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("planning");
+  const [project, setProject] = useState(null);
   const [features, setFeatures] = useState([]);
   const [devTasks, setDevTasks] = useState([]);
   const [maxDevEffort, setMaxDevEffort] = useState(0);
   const [testEffort, setTestEffort] = useState(10); // default fallback
-  const [sprintObj, setSprintObj] = useState(null);
   const [sprintDone, setSprintDone] = useState(false);
+  const [testTasks, setTestTasks] = useState([]);
   // Validation error state from Board
   const [validationError, setValidationError] = useState(false);
+  const [showTestEffortModal, setShowTestEffortModal] = useState(false);
+  const [pendingSprint, setPendingSprint] = useState(false);
 
   useEffect(() => {
     const { project, sprint } = startGame();
-    const featureList = project.backlog.filter(
-      (item) => item.getType && item.getType() === "Feature"
-    );
-    setFeatures(featureList);
+    setProject(project);
+    // Show all items (features and defects) in backlog
+    setFeatures(project.backlog);
     setDevTasks(sprint.devTasks);
     setMaxDevEffort(project.devEffort);
     setTestEffort(project.testEffort || 10); // get testEffort from backend
-    setSprintObj(sprint);
   }, []);
 
   const handleExecuteSprint = () => {
-    if (sprintObj && !sprintDone) {
-      sprintObj.done();
-      setSprintDone(true);
-      setDevTasks([...sprintObj.devTasks]); // update tasks for done sprint
-
-      // Create and fill new sprint
-      const newSprint = sprintObj.project.newSprint();
-      newSprint.fillDevSprint();
-      setSprintObj(newSprint);
-      setDevTasks([...newSprint.devTasks]);
-      setSprintDone(false); // allow execution of next sprint
+    const testTasksSumEffort = testTasks.reduce((sum, t) => sum + t.effort, 0);
+    if (testTasksSumEffort < testEffort) {
+      setShowTestEffortModal(true);
+      setPendingSprint(true);
+      return;
     }
+    executeSprint();
+  };
+
+  const executeSprint = () => {
+    const currentSprint = project && project.getCurrentSprint();
+    setSprintDone(true); // Disable button immediately to prevent double execution
+
+    testTasks.forEach((task, idx) => {
+      // Get selected features as Feature instances
+      const selectedFeatureObjs = (task.selectedFeatures || [])
+        .map((fId) => {
+          return features.find((f) => f.id === fId);
+        })
+        .filter(Boolean);
+      let testTaskInstance;
+
+      // Create appropriate test task based on action
+      if (task.action === "Exploratory Testing") {
+        testTaskInstance = new ExploratoryTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else {
+        testTaskInstance = new GatherKnowledgeTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      }
+      project.backlog.push(testTaskInstance);
+      currentSprint.addTestTask(testTaskInstance);
+    });
+
+    currentSprint.done();
+    setDevTasks([...currentSprint.devTasks]); // update tasks for done sprint
+    setFeatures(project.backlog);
+
+    // Create and fill new sprint
+    const newSprint = project.newSprint();
+    newSprint.fillDevSprint();
+    setDevTasks([...newSprint.devTasks]);
+    setSprintDone(false); // allow execution of next sprint
+  };
+
+  const handleModalConfirm = () => {
+    setShowTestEffortModal(false);
+    setPendingSprint(false);
+    executeSprint();
+  };
+
+  const handleModalCancel = () => {
+    setShowTestEffortModal(false);
+    setPendingSprint(false);
   };
 
   return (
@@ -51,8 +108,17 @@ export default function App() {
       <header className="app-header">
         <h1>Testing Game</h1>
         <div className="sprint-controls">
-          <span id="sprint-info">Sprint {sprintObj ? sprintObj.id : 1}</span>
-          <button className="btn btn-primary" onClick={handleExecuteSprint} disabled={sprintDone || validationError}>
+          <span id="sprint-info">
+            Sprint{" "}
+            {project && project.getCurrentSprint()
+              ? project.getCurrentSprint().id
+              : 1}
+          </span>
+          <button
+            className="btn btn-primary"
+            onClick={handleExecuteSprint}
+            disabled={sprintDone || validationError}
+          >
             Execute Sprint
           </button>
         </div>
@@ -62,9 +128,7 @@ export default function App() {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`tab-button${
-              activeTab === tab.key ? " active" : ""
-            }`}
+            className={`tab-button${activeTab === tab.key ? " active" : ""}`}
             onClick={() => setActiveTab(tab.key)}
             disabled={tab.key === "statistics"}
           >
@@ -74,7 +138,34 @@ export default function App() {
       </div>
 
       <div className="tab-content-container">
-        {activeTab === "planning" && <Board features={features} devTasks={devTasks} maxDevEffort={maxDevEffort} testEffort={testEffort} setValidationError={setValidationError} />}
+        {activeTab === "planning" && (
+          <>
+            <Board
+              features={features}
+              devTasks={devTasks}
+              maxDevEffort={maxDevEffort}
+              testEffort={testEffort}
+              setValidationError={setValidationError}
+              testTasks={testTasks}
+              setTestTasks={setTestTasks}
+            />
+            {showTestEffortModal && (
+              <div className="modal-overlay">
+                <div className="modal">
+                  <h3>Test Effort Not Fully Utilized</h3>
+                  <p>
+                    Test effort is not fully utilized ({testTasks.reduce((sum, t) => sum + t.effort, 0)} / {testEffort}).<br />
+                    Do you want to proceed with sprint execution?
+                  </p>
+                  <div className="modal-actions">
+                    <button className="btn btn-primary" onClick={handleModalConfirm}>Proceed</button>
+                    <button className="btn" onClick={handleModalCancel}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
         {activeTab === "statistics" && (
           <div className="tab-content">
             <p>Statistics and past sprints will be available here soon...</p>
@@ -89,27 +180,41 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
   // Helper: is feature selectable for current action
   const isFeatureSelectable = (feature) => {
     if (task.action === "Knowledge Gathering") return true;
-    if (task.action === "Exploratory Testing") return feature.isDone && feature.isDone();
+    if (task.action === "Exploratory Testing")
+      return feature.isDone && feature.isDone();
     return false;
   };
 
   // Ensure selectedFeatures is always an array
-  const selectedFeatures = Array.isArray(task.selectedFeatures) ? task.selectedFeatures : [];
+  const selectedFeatures = Array.isArray(task.selectedFeatures)
+    ? task.selectedFeatures
+    : [];
 
   // When changing action, unselect features that become disabled
   const handleActionChange = (newAction) => {
-    const newSelectable = features.filter(f => {
-      if (newAction === "Knowledge Gathering") return true;
-      if (newAction === "Exploratory Testing") return f.isDone && f.isDone();
-      return false;
-    }).map(f => f.id);
-    const filteredSelected = selectedFeatures.filter(id => newSelectable.includes(id));
-    onChange({ ...task, action: newAction, selectedFeatures: filteredSelected });
+    const newSelectable = features
+      .filter((f) => {
+        if (newAction === "Knowledge Gathering") return true;
+        if (newAction === "Exploratory Testing") return f.isDone && f.isDone();
+        return false;
+      })
+      .map((f) => f.id);
+    const filteredSelected = selectedFeatures.filter((id) =>
+      newSelectable.includes(id)
+    );
+    onChange({
+      ...task,
+      action: newAction,
+      selectedFeatures: filteredSelected,
+    });
   };
 
   const handleFeatureToggle = (featureId) => {
     if (selectedFeatures.includes(featureId)) {
-      onChange({ ...task, selectedFeatures: selectedFeatures.filter(id => id !== featureId) });
+      onChange({
+        ...task,
+        selectedFeatures: selectedFeatures.filter((id) => id !== featureId),
+      });
     } else {
       onChange({ ...task, selectedFeatures: [...selectedFeatures, featureId] });
     }
@@ -118,7 +223,7 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
   return (
     <div className="task-card test-task">
       <div className="task-header">
-        <span className="test-task-title">Test Task</span>
+        <span className="task-title test-task-title">Test Task</span>
         <button
           className="delete-task-btn"
           title="Delete Task"
@@ -136,7 +241,9 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
               min={1}
               max={testEffort}
               value={task.effort}
-              onChange={e => onChange({ ...task, effort: Number(e.target.value) })}
+              onChange={(e) =>
+                onChange({ ...task, effort: Number(e.target.value) })
+              }
               className="effort-slider"
             />
             <span className="effort-label">{task.effort}</span>
@@ -152,8 +259,9 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
                   name={`action-${idx}`}
                   value="Exploratory Testing"
                   checked={task.action === "Exploratory Testing"}
-                  onChange={e => handleActionChange(e.target.value)}
-                /> Exploratory Testing
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Exploratory Testing
               </label>
             </li>
             <li>
@@ -163,8 +271,9 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
                   name={`action-${idx}`}
                   value="Knowledge Gathering"
                   checked={task.action === "Knowledge Gathering"}
-                  onChange={e => handleActionChange(e.target.value)}
-                /> Knowledge Gathering
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Knowledge Gathering
               </label>
             </li>
           </ul>
@@ -172,18 +281,24 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
         <div className="feature-multiselect field-group vertical">
           <label className="field-label">Focus</label>
           <ul className="feature-list">
-            {features.map(feature => (
-              <li key={feature.id} style={{ opacity: isFeatureSelectable(feature) ? 1 : 0.5 }}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedFeatures.includes(feature.id)}
-                    disabled={!isFeatureSelectable(feature)}
-                    onChange={() => handleFeatureToggle(feature.id)}
-                  /> {feature.name}
-                </label>
-              </li>
-            ))}
+            {features
+              .filter(f => f.getType && f.getType() === "Feature")
+              .map((feature) => (
+                <li
+                  key={feature.id}
+                  style={{ opacity: isFeatureSelectable(feature) ? 1 : 0.5 }}
+                >
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedFeatures.includes(feature.id)}
+                      disabled={!isFeatureSelectable(feature)}
+                      onChange={() => handleFeatureToggle(feature.id)}
+                    />{" "}
+                    {feature.name}
+                  </label>
+                </li>
+              ))}
           </ul>
         </div>
       </div>
@@ -191,26 +306,34 @@ function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
   );
 }
 
-function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10, setValidationError }) {
-  const [testTasks, setTestTasks] = useState([]);
-
-  const backlogEffort = features.reduce((sum, f) => sum + (f.size || 0), 0);
-  const devEffort = devTasks.reduce((sum, t) => sum + (t.size || 0), 0);
-
-  // Collect all done features and defects from both features and devTasks
-  const doneCards = [
-    ...features.filter(f => f.isDone && f.isDone()),
-    ...devTasks.filter(t => t.isDone && t.isDone())
-  ];
-
+function Board({
+  features = [],
+  devTasks = [],
+  maxDevEffort = 0,
+  testEffort = 10,
+  setValidationError,
+  testTasks,
+  setTestTasks,
+}) {
   // Filter backlog: exclude done and current sprint items
-  const devTaskIds = new Set(devTasks.map(t => t.id));
-  const backlogCards = features.filter(f =>
-    !(f.isDone && f.isDone()) && !devTaskIds.has(f.id)
+  const devTaskIds = new Set(devTasks.map((t) => t.id));
+  const backlogCards = features.filter(
+    (f) => !(f.isDone && f.isDone()) && !devTaskIds.has(f.id)
   );
 
+  // Only count effort for visible backlog cards
+  const backlogEffort = backlogCards.reduce((sum, f) => sum + (f.size || 0), 0);
+  // Collect all done features and defects from both features and devTasks
+  const doneCards = [
+    ...features.filter((f) => f.isDone && f.isDone()),
+    ...devTasks.filter((t) => t.isDone && t.isDone()),
+  ];
+
   const handleAddTestTask = () => {
-    setTestTasks([...testTasks, { action: "Knowledge Gathering", selectedFeatures: [], effort: 1 }]);
+    setTestTasks([
+      ...testTasks,
+      { action: "Knowledge Gathering", selectedFeatures: [], effort: 1 },
+    ]);
   };
 
   const handleTestTaskChange = (idx, newTask) => {
@@ -234,17 +357,50 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
       <Column
         title="Backlog"
         effort={backlogEffort}
-        cards={backlogCards.map((f) => (
-          <FeatureCard key={f.id} name={f.name} size={f.size} complexity={f.complexity} />
-        ))}
+        cards={backlogCards.map((f) =>
+          f.getType && f.getType() === "Defect" ? (
+            <DefectCard
+              key={f.id}
+              name={f.name}
+              size={f.size}
+              complexity={f.complexity}
+              severity={f.severity}
+            />
+          ) : (
+            <FeatureCard
+              key={f.id}
+              name={f.name}
+              size={f.size}
+              complexity={f.complexity}
+              knowledge={f.knowledge}
+            />
+          )
+        )}
       />
       <Column
         title="Current Sprint"
-        effort={`${devEffort} / ${maxDevEffort}`}
+        effort={`${devTasks.reduce(
+          (sum, t) => sum + (t.size || 0),
+          0
+        )} / ${maxDevEffort}`}
         cards={devTasks.map((t) =>
-          t.getType && t.getType() === "Defect"
-            ? <DefectCard key={t.id} name={t.name} size={t.size} complexity={t.complexity} severity={t.severity} />
-            : <FeatureCard key={t.id} name={t.name} size={t.size} complexity={t.complexity} />
+          t.getType && t.getType() === "Defect" ? (
+            <DefectCard
+              key={t.id}
+              name={t.name}
+              size={t.size}
+              complexity={t.complexity}
+              severity={t.severity}
+            />
+          ) : (
+            <FeatureCard
+              key={t.id}
+              name={t.name}
+              size={t.size}
+              complexity={t.complexity}
+              knowledge={t.knowledge}
+            />
+          )
         )}
       />
       <Column
@@ -255,7 +411,7 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
           <TestTaskCard
             key={idx}
             task={task}
-            onChange={newTask => handleTestTaskChange(idx, newTask)}
+            onChange={(newTask) => handleTestTaskChange(idx, newTask)}
             features={features}
             idx={idx}
             testEffort={testEffort}
@@ -266,18 +422,39 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
       />
       <Column
         title="Done"
-        effort={doneCards.length}
-        cards={doneCards.map((item) =>
-          item.getType && item.getType() === "Defect"
-            ? <DefectCard key={item.id} name={item.name} size={item.size} complexity={item.complexity} severity={item.severity} />
-            : <FeatureCard key={item.id} name={item.name} size={item.size} complexity={item.complexity} />
+        effort={doneCards.filter(item => item.getType && (item.getType() === "Feature" || item.getType() === "Defect")).length}
+        cards={doneCards.filter(item => item.getType && (item.getType() === "Feature" || item.getType() === "Defect")).map((item) =>
+          item.getType && item.getType() === "Defect" ? (
+            <DefectCard
+              key={item.id}
+              name={item.name}
+              size={item.size}
+              complexity={item.complexity}
+              severity={item.severity}
+            />
+          ) : (
+            <FeatureCard
+              key={item.id}
+              name={item.name}
+              size={item.size}
+              complexity={item.complexity}
+              knowledge={item.knowledge}
+            />
+          )
         )}
       />
     </div>
   );
 }
 
-function Column({ title, effort = 0, cards = [], headerButton, error, children }) {
+function Column({
+  title,
+  effort = 0,
+  cards = [],
+  headerButton,
+  error,
+  children,
+}) {
   return (
     <div className="column">
       <div className="column-header">
@@ -286,7 +463,15 @@ function Column({ title, effort = 0, cards = [], headerButton, error, children }
         {headerButton && <span className="header-btn">{headerButton}</span>}
       </div>
       {error && (
-        <div style={{ fontSize: '0.7em', textAlign: 'left', padding: '1em 1.5em', background: 'rgb(220, 53, 69)', color: '#fff' }}>
+        <div
+          style={{
+            fontSize: "0.7em",
+            textAlign: "left",
+            padding: "1em 1.5em",
+            background: "rgb(220, 53, 69)",
+            color: "#fff",
+          }}
+        >
           ⚠️ Total test effort exceeds the allowed maximum!
         </div>
       )}
