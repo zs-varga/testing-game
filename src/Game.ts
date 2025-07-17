@@ -242,7 +242,7 @@ export class Game implements IGame {
 
   initializeProject(project: Project): void {
     project.devEffort = 10;
-    project.testEffort = 10;
+    project.testEffort = 5;
     this.generateFeatures(project, 5);
   }
 }

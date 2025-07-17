@@ -7,6 +7,7 @@ export class TestFunctions {
     if (effort <= 0 || effort > project.testEffort) {
       throw new Error("testing: invalid effort");
     }
+
     feature.knowledge = Math.min(
       feature.knowledge + effort / Math.max(feature.size, feature.complexity),
       1
@@ -24,6 +25,7 @@ export class TestFunctions {
     const unknownDefects = feature
       .getDefects()
       .filter((defect) => !defect.isFound);
+    
     unknownDefects.forEach((defect) => {
       const baseChance = Math.random();
       const effortFactor = 1 + effort / feature.size; // higher effort means higher chance to find defects
