@@ -16,6 +16,8 @@ export default function App() {
   const [testEffort, setTestEffort] = useState(10); // default fallback
   const [sprintObj, setSprintObj] = useState(null);
   const [sprintDone, setSprintDone] = useState(false);
+  // Validation error state from Board
+  const [validationError, setValidationError] = useState(false);
 
   useEffect(() => {
     const { project, sprint } = startGame();
@@ -50,7 +52,7 @@ export default function App() {
         <h1>Testing Game</h1>
         <div className="sprint-controls">
           <span id="sprint-info">Sprint {sprintObj ? sprintObj.id : 1}</span>
-          <button className="btn btn-primary" onClick={handleExecuteSprint} disabled={sprintDone}>
+          <button className="btn btn-primary" onClick={handleExecuteSprint} disabled={sprintDone || validationError}>
             Execute Sprint
           </button>
         </div>
@@ -72,7 +74,7 @@ export default function App() {
       </div>
 
       <div className="tab-content-container">
-        {activeTab === "planning" && <Board features={features} devTasks={devTasks} maxDevEffort={maxDevEffort} testEffort={testEffort} />}
+        {activeTab === "planning" && <Board features={features} devTasks={devTasks} maxDevEffort={maxDevEffort} testEffort={testEffort} setValidationError={setValidationError} />}
         {activeTab === "statistics" && (
           <div className="tab-content">
             <p>Statistics and past sprints will be available here soon...</p>
@@ -83,7 +85,7 @@ export default function App() {
   );
 }
 
-function TestTaskCard({ task, onChange, features, idx, testEffort }) {
+function TestTaskCard({ task, onChange, features, idx, testEffort, onDelete }) {
   // Helper: is feature selectable for current action
   const isFeatureSelectable = (feature) => {
     if (task.action === "Knowledge Gathering") return true;
@@ -115,6 +117,17 @@ function TestTaskCard({ task, onChange, features, idx, testEffort }) {
 
   return (
     <div className="task-card test-task">
+      <div className="task-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 0, marginBottom: 0 }}>
+        <span style={{ fontWeight: 600, color: '#333', fontSize: '0.9rem', lineHeight: 1.3, display: 'flex', alignItems: 'center', height: '28px' }}>Test Task</span>
+        <button
+          className="delete-task-btn"
+          title="Delete Task"
+          style={{ background: 'none', border: 'none', color: '#dc3545', fontSize: '1.1em', cursor: 'pointer', padding: '2px 8px', borderRadius: '50%', marginLeft: 'auto', height: '28px', display: 'flex', alignItems: 'center' }}
+          onClick={onDelete}
+        >
+          ×
+        </button>
+      </div>
       <div className="task-details">
         <div className="field-group vertical">
           <label className="field-label">Effort</label>
@@ -180,7 +193,7 @@ function TestTaskCard({ task, onChange, features, idx, testEffort }) {
   );
 }
 
-function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10 }) {
+function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10, setValidationError }) {
   const [testTasks, setTestTasks] = useState([]);
 
   const backlogEffort = features.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -208,6 +221,16 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
     setTestTasks(updated);
   };
 
+  const handleDeleteTestTask = (idx) => {
+    setTestTasks(testTasks.filter((_, i) => i !== idx));
+  };
+
+  const testTasksSumEffort = testTasks.reduce((sum, t) => sum + t.effort, 0);
+  const isTestEffortExceeded = testTasksSumEffort > testEffort;
+  useEffect(() => {
+    setValidationError(isTestEffortExceeded);
+  }, [isTestEffortExceeded, setValidationError]);
+
   return (
     <div className="board">
       <Column
@@ -228,11 +251,20 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
       />
       <Column
         title="Test Tasks"
-        effort={testTasks.reduce((sum, t) => sum + t.effort, 0)}
-        headerButton={<button onClick={handleAddTestTask}>Add Task</button>}
+        effort={`${testTasksSumEffort} / ${testEffort}`}
+        headerButton={<button onClick={handleAddTestTask}>Add</button>}
         cards={testTasks.map((task, idx) => (
-          <TestTaskCard key={idx} task={task} onChange={newTask => handleTestTaskChange(idx, newTask)} features={features} idx={idx} testEffort={testEffort} />
+          <TestTaskCard
+            key={idx}
+            task={task}
+            onChange={newTask => handleTestTaskChange(idx, newTask)}
+            features={features}
+            idx={idx}
+            testEffort={testEffort}
+            onDelete={() => handleDeleteTestTask(idx)}
+          />
         ))}
+        error={isTestEffortExceeded}
       />
       <Column
         title="Done"
@@ -247,7 +279,7 @@ function Board({ features = [], devTasks = [], maxDevEffort = 0, testEffort = 10
   );
 }
 
-function Column({ title, effort = 0, cards = [], headerButton }) {
+function Column({ title, effort = 0, cards = [], headerButton, error, children }) {
   return (
     <div className="column">
       <div className="column-header">
@@ -255,10 +287,16 @@ function Column({ title, effort = 0, cards = [], headerButton }) {
         <span className="effort-sum">{effort} effort</span>
         {headerButton && <span className="header-btn">{headerButton}</span>}
       </div>
+      {error && (
+        <div style={{ fontSize: '0.7em', textAlign: 'left', padding: '1em 1.5em', background: 'rgb(220, 53, 69)', color: '#fff' }}>
+          ⚠️ Total test effort exceeds the allowed maximum!
+        </div>
+      )}
       <div className="column-content">
         {cards.map((card, idx) =>
           card ? React.cloneElement(card, { key: idx }) : null
         )}
+        {children}
       </div>
     </div>
   );
