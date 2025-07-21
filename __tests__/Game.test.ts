@@ -127,7 +127,7 @@ describe('Game Engine', () => {
         expect(defect.severity).toBeLessThanOrEqual(3);
         expect(defect.stealth).toBeGreaterThanOrEqual(0);
         expect(defect.stealth).toBeLessThanOrEqual(1);
-        expect(['functionality', 'usability', 'performance', 'security']).toContain(defect.type);
+        expect(['functionality', 'usability', 'performance', 'security']).toContain(defect.defectType);
       });
     });
 

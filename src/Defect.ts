@@ -10,7 +10,7 @@ export type DefectType =
 export interface IDefect extends ITask {
   causeTask: ITask;
   severity: number;
-  type: DefectType;
+  defectType: DefectType;
   stealth: number;
   isFound: boolean;
 }
@@ -18,7 +18,7 @@ export interface IDefect extends ITask {
 export class Defect extends Task implements IDefect {
   private _causeTask: ITask;
   private _severity: number;
-  private _type: DefectType;
+  private _defectType: DefectType;
   private _stealth: number;
   private _isFound: boolean;
 
@@ -30,7 +30,7 @@ export class Defect extends Task implements IDefect {
     complexity: number = 1,
     causeTask: ITask,
     severity: number = 1,
-    type: DefectType = "functionality",
+    defectType: DefectType = "functionality",
     stealth: number = 0,
     isFound: boolean = false,
     status: "new" | "done" = "new"
@@ -38,15 +38,15 @@ export class Defect extends Task implements IDefect {
     super(id, name, project, size, complexity, status);
     this._causeTask = causeTask;
     this._severity = severity;
-    this._type = type;
+    this._defectType = defectType;
     this._stealth = stealth;
     this._isFound = isFound;
   }
 
   // Getters
 
-  get type(): DefectType {
-    return this._type;
+  get defectType(): DefectType {
+    return this._defectType;
   }
 
   get causeTask(): ITask {
@@ -67,8 +67,8 @@ export class Defect extends Task implements IDefect {
 
   // Setters
 
-  set type(value: DefectType) {
-    this._type = value;
+  set defectType(value: DefectType) {
+    this._defectType = value;
   }
 
   set causeTask(value: ITask) {

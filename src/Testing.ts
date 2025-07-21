@@ -46,7 +46,7 @@ export class Testing implements ITesting {
     unknownDefects.forEach((defect) => {
       const baseChance = Math.random();
       const effortFactor = 1 + effort / feature.size; // higher effort means higher chance to find defects
-      const typeFactor = defect.type === type ? 1 : 0.2; // high chance for matching type
+      const typeFactor = defect.defectType === type ? 1 : 0.2; // high chance for matching type
       const knowledgeFactor = feature.knowledge; // higher knowledge means higher chance to find defects
       const detectionScore =
         baseChance * effortFactor * typeFactor * knowledgeFactor;

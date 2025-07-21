@@ -1,3 +1,4 @@
+import { IDefect } from "./Defect.js";
 import { Project } from "./Project.js";
 
 export interface ITask {
@@ -120,23 +121,31 @@ export abstract class Task implements ITask {
     return "Task";
   }
 
-  // Linked tasks management
   addLinkedTask(task: ITask): void {
     if (task.id === this.id) {
       return; // Prevent linking to itself
     }
 
-    if (!this._linkedTasks.find(t => t.id === task.id)) {
+    if (!this._linkedTasks.find((t) => t.id === task.id)) {
       this._linkedTasks.push(task);
     }
   }
 
   removeLinkedTask(task: ITask): boolean {
-    const index = this._linkedTasks.findIndex(t => t.id === task.id);
+    const index = this._linkedTasks.findIndex((t) => t.id === task.id);
     if (index !== -1) {
       this._linkedTasks.splice(index, 1);
       return true;
     }
     return false;
+  }
+
+  getRisks(): string[] {
+    const risks = this.linkedTasks
+      .filter((task) => task.getType() === "Defect" && !task.isDone())
+      .map((defect) => (defect as IDefect).defectType)
+      .filter((value, index, self) => value && self.indexOf(value) === index)
+      .sort();
+    return risks;
   }
 }

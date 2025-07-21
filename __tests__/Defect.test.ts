@@ -35,7 +35,7 @@ describe('Defect Class', () => {
       expect(defect.complexity).toBe(2);
       expect(defect.causeTask).toBe(feature);
       expect(defect.severity).toBe(3);
-      expect(defect.type).toBe('functionality');
+      expect(defect.defectType).toBe('functionality');
       expect(defect.stealth).toBe(0.5);
       expect(defect.status).toBe('new');
       expect(defect.isFound).toBe(false);
@@ -52,7 +52,7 @@ describe('Defect Class', () => {
       expect(simpleDefect.complexity).toBe(1);
       expect(simpleDefect.causeTask).toBe(feature);
       expect(simpleDefect.severity).toBe(1);
-      expect(simpleDefect.type).toBe('functionality');
+      expect(simpleDefect.defectType).toBe('functionality');
       expect(simpleDefect.stealth).toBe(0);
       expect(simpleDefect.status).toBe('new');
       expect(simpleDefect.isFound).toBe(false);
@@ -69,7 +69,7 @@ describe('Defect Class', () => {
       
       types.forEach(type => {
         const testDefect = new Defect(10, 'Test', project, 1, 1, feature, 1, type, 0);
-        expect(testDefect.type).toBe(type);
+        expect(testDefect.defectType).toBe(type);
       });
     });
   });
@@ -243,14 +243,14 @@ describe('Defect Class', () => {
     });
 
     test('should validate type setter', () => {
-      defect.type = 'security';
-      expect(defect.type).toBe('security');
+      defect.defectType = 'security';
+      expect(defect.defectType).toBe('security');
       
-      defect.type = 'performance';
-      expect(defect.type).toBe('performance');
+      defect.defectType = 'performance';
+      expect(defect.defectType).toBe('performance');
       
-      defect.type = 'usability';
-      expect(defect.type).toBe('usability');
+      defect.defectType = 'usability';
+      expect(defect.defectType).toBe('usability');
     });
   });
 });
