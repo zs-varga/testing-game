@@ -91,9 +91,26 @@ export class Game implements IGame {
     for (let i = 0; i < n; i++) {
       const id = project.getNextId();
       const featureName = FEATURE_NAMES[i % FEATURE_NAMES.length];
-      const feature = new Feature(id, featureName, project);
-      feature.size = Math.floor(Math.random() * MAX_SIZE) + 1;
-      feature.complexity = Math.floor(Math.random() * MAX_COMPLEXITY) + 1;
+      
+      const feature = new Feature(
+        id,
+        featureName,
+        project,
+        Math.floor(Math.random() * MAX_SIZE) + 1, // size
+        Math.floor(Math.random() * MAX_COMPLEXITY) + 1, // complexity
+        0, // knowledge
+        "new"
+      );
+
+      // Set risks
+      const risks = {
+        functionality: Math.random(),
+        performance: Math.random(),
+        usability: Math.random(),
+        security: Math.random(),
+      };
+      feature.risks = risks;
+
       project.addToBacklog(feature);
       createdFeatures.push(feature);
     }
@@ -149,34 +166,44 @@ export class Game implements IGame {
         .map(({ name }) => name),
     };
 
-    // Define defect types to randomly select from
-    const defectTypes: DefectType[] = [
-      "functionality",
-      "usability",
-      "performance",
-      "security",
-    ];
-
+    // Determine defect count and create defects array before loop
     const defectCount = Math.floor(Math.random() * maxDefects) + 1;
     const createdDefects: IDefect[] = [];
-
     // Create defects
     for (let i = 1; i <= defectCount; i++) {
-      const newId = project.getNextId();
-      const randomType =
-        defectTypes[Math.floor(Math.random() * defectTypes.length)];
+      // --- Weighted defect type selection based on risks ---
+      const risks = (task as any).risks || {
+        functionality: 0.25,
+        usability: 0.25,
+        performance: 0.25,
+        security: 0.25,
+      };
+      const defectTypes: DefectType[] = ["functionality", "usability", "performance", "security"];
+      const weights = defectTypes.map(type => risks[type]);
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      let rand = Math.random() * totalWeight;
+      let cumulative = 0;
+      let type = defectTypes[0];
+      for (let j = 0; j < defectTypes.length; j++) {
+        cumulative += weights[j];
+        if (rand < cumulative) {
+          type = defectTypes[j];
+          break;
+        }
+      }
+      // --- End weighted selection ---
       const randomSeverity = Math.floor(Math.random() * 3) + 1; // 1-3
       const randomStealth = Math.random(); // 0-1
 
       const newDefect = new Defect(
-        newId,
-        DEFECT_NAMES[randomType][(i - 1) % DEFECT_NAMES[randomType].length],
+        project.getNextId(),
+        DEFECT_NAMES[type][(i - 1) % DEFECT_NAMES[type].length],
         project,
         Math.floor(Math.random() * task.size) + 1, // size
         Math.floor(Math.random() * task.complexity) + 1, // complexity
         task, // causeTask
         randomSeverity, // severity
-        randomType, // type
+        type, // type
         randomStealth, // stealth
       );
 

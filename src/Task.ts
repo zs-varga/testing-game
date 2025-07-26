@@ -1,6 +1,19 @@
 import { IDefect } from "./Defect.js";
 import { Project } from "./Project.js";
 
+export type DefectType =
+  | "functionality"
+  | "performance"
+  | "usability"
+  | "security";
+
+export type Risks = {
+  functionality: number;
+  performance: number;
+  usability: number;
+  security: number;
+};
+
 export interface ITask {
   id: number;
   name: string;
@@ -24,6 +37,7 @@ export abstract class Task implements ITask {
   private _status: "new" | "done";
   private _project: Project;
   private _linkedTasks: ITask[];
+  private _risks: Risks;
 
   constructor(
     id: number,
@@ -31,7 +45,8 @@ export abstract class Task implements ITask {
     project: Project,
     size: number = 1,
     complexity: number = 1,
-    status: "new" | "done" = "new"
+    status: "new" | "done" = "new",
+    risks: Risks = { functionality: 0, performance: 0, usability: 0, security: 0 }
   ) {
     this._id = id;
     this._name = name;
@@ -40,6 +55,7 @@ export abstract class Task implements ITask {
     this._status = status;
     this._project = project;
     this._linkedTasks = [];
+    this._risks = risks;
   }
 
   // Getters
@@ -69,6 +85,10 @@ export abstract class Task implements ITask {
 
   get linkedTasks(): ITask[] {
     return this._linkedTasks;
+  }
+
+  get risks(): Risks {
+    return this._risks;
   }
 
   // Setters
@@ -108,6 +128,23 @@ export abstract class Task implements ITask {
     this._linkedTasks = value;
   }
 
+  set risks(value: Risks) {
+    // Normalize so the sum of all risks is 1 (distribution)
+    const sum = value.functionality + value.performance + value.usability + value.security;
+    let normalized: Risks;
+    if (sum > 0) {
+      normalized = {
+        functionality: value.functionality / sum,
+        performance: value.performance / sum,
+        usability: value.usability / sum,
+        security: value.security / sum,
+      };
+    } else {
+      normalized = { functionality: 0, performance: 0, usability: 0, security: 0 };
+    }
+    this._risks = normalized;
+  }
+
   // Methods
   done(): void {
     this.status = "done";
@@ -138,14 +175,5 @@ export abstract class Task implements ITask {
       return true;
     }
     return false;
-  }
-
-  getRisks(): string[] {
-    const risks = this.linkedTasks
-      .filter((task) => task.getType() === "Defect" && !task.isDone())
-      .map((defect) => (defect as IDefect).defectType)
-      .filter((value, index, self) => value && self.indexOf(value) === index)
-      .sort();
-    return risks;
   }
 }

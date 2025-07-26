@@ -437,7 +437,7 @@ function Board({
               size={f.size}
               complexity={f.complexity}
               knowledge={f.knowledge}
-              risks={f.getRisks ? f.getRisks() : []}
+              risks={f.risks ? f.risks : []}
             />
           )
         )}
@@ -460,7 +460,7 @@ function Board({
               size={t.size}
               complexity={t.complexity}
               knowledge={t.knowledge}
-              risks={t.getRisks ? t.getRisks() : []}
+              risks={t.risks ? t.risks : []}
             />
           )
         )}
@@ -500,7 +500,7 @@ function Board({
               size={item.size}
               complexity={item.complexity}
               knowledge={item.knowledge}
-              risks={item.getRisks ? item.getRisks() : []}
+              risks={item.risks ? item.risks : []}
             />
           )
         )}
