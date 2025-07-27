@@ -1,0 +1,8 @@
+.task-type.feature {
+  background: #d4edda;
+  color: #155724;
+}
+
+.task-card.feature {
+  border-left: 4px solid #28a745;
+}

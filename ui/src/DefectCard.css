@@ -1,0 +1,10 @@
+
+
+.task-type.defect {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.task-card.defect {
+  border-left: 4px solid #dc3545;
+}
