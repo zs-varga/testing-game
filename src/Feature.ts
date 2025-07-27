@@ -8,6 +8,7 @@ export interface IFeature extends ITask {
 
 export class Feature extends Task implements IFeature {
   private _knowledge: number;
+  private _riskKnowledge: number = 0;
 
   constructor(
     id: number,
@@ -20,6 +21,7 @@ export class Feature extends Task implements IFeature {
   ) {
     super(id, name, project, size, complexity, status);
     this._knowledge = knowledge;
+    this._riskKnowledge = 0;
   }
 
   // Getter and setter for knowledge
@@ -33,6 +35,17 @@ export class Feature extends Task implements IFeature {
     }
 
     this._knowledge = value;
+  }
+
+  get riskKnowledge(): number {
+    return this._riskKnowledge;
+  }
+
+  set riskKnowledge(value: number) {
+    if (value < 0 || value > 1) {
+      throw new Error("Feature: invalid riskKnowledge value");
+    }
+    this._riskKnowledge = value;
   }
 
   getType(): string {
