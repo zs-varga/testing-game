@@ -7,6 +7,7 @@ import { startGame } from "./game-engine";
 import { TestTask } from "../../src/TestTask/TestTask";
 import { ExploratoryTestTask } from "../../src/TestTask/ExploratoryTestTask";
 import { GatherKnowledgeTask } from "../../src/TestTask/GatherKnowledgeTask";
+import { RiskAssessmentTask } from "../../src/TestTask/RiskAssessmentTask";
 import { Feature } from "../../src/Feature";
 
 const TABS = [
@@ -65,6 +66,14 @@ export default function App() {
       let testTaskInstance;
       if (task.action === "Exploratory Testing") {
         testTaskInstance = new ExploratoryTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else if (task.action === "Risk Assessment") {
+        testTaskInstance = new RiskAssessmentTask(
           project.getNextId(),
           task.action,
           project,

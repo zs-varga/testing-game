@@ -8,8 +8,9 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
     if (task.action === "Knowledge Gathering") return true;
     if (task.action === "Exploratory Testing")
       return feature.isDone && feature.isDone();
+    if (task.action === "Risk Assessment") return true;
     return false;
-  };
+  }
 
   // Ensure selectedFeatures is always an array
   const selectedFeatures = Array.isArray(task.selectedFeatures)
@@ -21,6 +22,7 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
     const newSelectable = features
       .filter((f) => {
         if (newAction === "Knowledge Gathering") return true;
+        if (newAction === "Risk Assessment") return true;
         if (newAction === "Exploratory Testing") return f.isDone && f.isDone();
         return false;
       })
@@ -83,6 +85,18 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
                 <input
                   type="radio"
                   name={`action-${idx}`}
+                  value="Knowledge Gathering"
+                  checked={task.action === "Knowledge Gathering"}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Knowledge Gathering
+              </label>
+            </li>
+            <li>
+              <label>
+                <input
+                  type="radio"
+                  name={`action-${idx}`}
                   value="Exploratory Testing"
                   checked={task.action === "Exploratory Testing"}
                   onChange={(e) => handleActionChange(e.target.value)}
@@ -95,11 +109,11 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
                 <input
                   type="radio"
                   name={`action-${idx}`}
-                  value="Knowledge Gathering"
-                  checked={task.action === "Knowledge Gathering"}
+                  value="Risk Assessment"
+                  checked={task.action === "Risk Assessment"}
                   onChange={(e) => handleActionChange(e.target.value)}
                 />{" "}
-                Knowledge Gathering
+                Risk Assessment
               </label>
             </li>
           </ul>

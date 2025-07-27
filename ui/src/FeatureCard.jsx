@@ -16,7 +16,7 @@ const FeatureCard = ({ name, size, complexity, knowledge = 0, riskKnowledge = 0,
       <div className="task-details">
         {knowledge > 0 && <span className="task-detail">Size: {size}</span>}
         {knowledge > 0.3 && <span className="task-detail">Complexity: {complexity}</span>}
-        {riskKnowledge > 0 && knowledge < 0.8 && riskEntries.length > 0 && (
+        {riskKnowledge > 0 && riskKnowledge < 0.8 && riskEntries.length > 0 && (
           <span className="task-detail">Risk: {riskEntries[0][0]}</span>
         )}
         {riskKnowledge > 0.8 && riskEntries.length > 0 && (
