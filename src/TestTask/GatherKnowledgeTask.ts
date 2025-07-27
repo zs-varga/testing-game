@@ -23,7 +23,7 @@ export class GatherKnowledgeTask extends TestTask {
 
   done(): void {
     const effortPerFeature = this.size / this._features.length;
-    this._features.forEach(feature => {
+    this._features.forEach((feature) => {
       TestFunctions.gatherKnowledge(this.project, feature, effortPerFeature);
     });
     super.done();

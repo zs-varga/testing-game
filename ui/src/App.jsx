@@ -4,11 +4,13 @@ import FeatureCard from "./FeatureCard";
 import DefectCard from "./DefectCard";
 import TestTaskCard from "./TestTaskCard";
 import { startGame } from "./game-engine";
-import { TestTask } from "../../src/TestTask/TestTask";
 import { ExploratoryTestTask } from "../../src/TestTask/ExploratoryTestTask";
 import { GatherKnowledgeTask } from "../../src/TestTask/GatherKnowledgeTask";
 import { RiskAssessmentTask } from "../../src/TestTask/RiskAssessmentTask";
-import { Feature } from "../../src/Feature";
+import { PerformanceTestTask } from "../../src/TestTask/PerformanceTestTask";
+import { SecurityTestTask } from "../../src/TestTask/SecurityTestTask";
+import { UsabilityTestTask } from "../../src/TestTask/UsabilityTestTask";
+import { FunctionalTestTask } from "../../src/TestTask/FunctionalTestTask";
 
 const TABS = [
   { key: "planning", label: "Sprint Planning" },
@@ -80,7 +82,39 @@ export default function App() {
           selectedFeatureObjs,
           task.effort
         );
-      } else {
+      } else if (task.action === "Functional Testing") {
+        testTaskInstance = new FunctionalTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else if (task.action === "Performance Testing") {
+        testTaskInstance = new PerformanceTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else if (task.action === "Security Testing") {
+        testTaskInstance = new SecurityTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else if (task.action === "Usability Testing") {
+        testTaskInstance = new UsabilityTestTask(
+          project.getNextId(),
+          task.action,
+          project,
+          selectedFeatureObjs,
+          task.effort
+        );
+      } else if (task.action === "Knowledge Gathering") {
         testTaskInstance = new GatherKnowledgeTask(
           project.getNextId(),
           task.action,
@@ -88,6 +122,8 @@ export default function App() {
           selectedFeatureObjs,
           task.effort
         );
+      } else {
+        throw new Error(`Unknown task action: ${task.action}`);
       }
       project.backlog.push(testTaskInstance);
       currentSprint.addTestTask(testTaskInstance);
@@ -104,16 +140,17 @@ export default function App() {
 
     if (!sprintHasFeature && backlogIsEmpty) {
       // Evaluate defects
-      const allDefects = project.defects;
-      const totalDefects = allDefects.length;
-      const notDoneDefects = allDefects.filter(
-        (d) => !d.isDone()
-      ).length;
+      const notDoneDefects = project.defects.filter((d) => !d.isDone());
       const percentNotDone =
-        totalDefects === 0 ? 0 : Math.round((notDoneDefects / totalDefects) * 100);
-      
+        project.defects.length === 0
+          ? 0
+          : Math.round((notDoneDefects.length / project.defects.length) * 100);
+
       if (percentNotDone > 10) {
-        setGameResult(`You lost! ${percentNotDone}% of defects were not found.`);
+        setGameResult(
+          `You lost! ${percentNotDone}% of defects were not found.`
+        );
+        console.log(notDoneDefects);
       } else {
         setGameResult(`You won! ${percentNotDone}% of defects were not found.`);
       }
@@ -252,7 +289,6 @@ export default function App() {
   );
 }
 
-
 function Board({
   features = [],
   devTasks = [],
@@ -368,27 +404,33 @@ function Board({
       />
       <Column
         title="Done"
-        cards={doneCards.filter(item => item.getType && (item.getType() === "Feature" || item.getType() === "Defect")).map((item) =>
-          item.getType && item.getType() === "Defect" ? (
-            <DefectCard
-              key={item.id}
-              name={item.name}
-              size={item.size}
-              complexity={item.complexity}
-              severity={item.severity}
-            />
-          ) : (
-            <FeatureCard
-              key={item.id}
-              name={item.name}
-              size={item.size}
-              complexity={item.complexity}
-              knowledge={item.knowledge}
-              riskKnowledge={item.riskKnowledge}
-              risks={item.risks ? item.risks : []}
-            />
+        cards={doneCards
+          .filter(
+            (item) =>
+              item.getType &&
+              (item.getType() === "Feature" || item.getType() === "Defect")
           )
-        )}
+          .map((item) =>
+            item.getType && item.getType() === "Defect" ? (
+              <DefectCard
+                key={item.id}
+                name={item.name}
+                size={item.size}
+                complexity={item.complexity}
+                severity={item.severity}
+              />
+            ) : (
+              <FeatureCard
+                key={item.id}
+                name={item.name}
+                size={item.size}
+                complexity={item.complexity}
+                knowledge={item.knowledge}
+                riskKnowledge={item.riskKnowledge}
+                risks={item.risks ? item.risks : []}
+              />
+            )
+          )}
       />
     </div>
   );

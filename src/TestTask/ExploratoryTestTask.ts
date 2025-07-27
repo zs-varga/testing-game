@@ -27,15 +27,29 @@ export class ExploratoryTestTask extends TestTask {
     const knowledgeEffortPerFeature = effortPerFeature / 2;
     const defectEffortPerFeature = effortPerFeature / 4;
 
-    this._features.forEach(feature => {
+    this._features.forEach((feature) => {
       // half the effort per feature is used to increase knowledge
-      TestFunctions.gatherKnowledge(this.project, feature, knowledgeEffortPerFeature);
+      TestFunctions.gatherKnowledge(
+        this.project,
+        feature,
+        knowledgeEffortPerFeature
+      );
 
       // the other half is used to find defects (split between functionality and usability)
-      TestFunctions.findDefects(this.project, feature, "functionality", defectEffortPerFeature);
-      TestFunctions.findDefects(this.project, feature, "usability", defectEffortPerFeature);
+      TestFunctions.findDefects(
+        this.project,
+        feature,
+        "functionality",
+        defectEffortPerFeature
+      );
+      TestFunctions.findDefects(
+        this.project,
+        feature,
+        "usability",
+        defectEffortPerFeature
+      );
     });
-    
+
     super.done();
   }
 

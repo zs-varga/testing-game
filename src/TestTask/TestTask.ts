@@ -1,9 +1,7 @@
 import { ITask, Task } from "../Task.js";
 import { Project } from "../Project.js";
 
-export interface ITestTask extends ITask {
-
-}
+export interface ITestTask extends ITask {}
 
 export class TestTask extends Task implements ITestTask {
   constructor(

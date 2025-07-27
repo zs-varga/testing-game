@@ -3,17 +3,26 @@ import { Feature } from "../Feature.js";
 import { DefectType } from "../Defect.js";
 
 export class TestFunctions {
-  static riskAssessment(project: Project, feature: Feature, effort: number): void {
+  static riskAssessment(
+    project: Project,
+    feature: Feature,
+    effort: number
+  ): void {
     if (effort <= 0 || effort > project.testEffort) {
       throw new Error("testing: invalid effort");
     }
     feature.riskKnowledge = Math.min(
-      feature.riskKnowledge + effort / Math.max(feature.size, feature.complexity),
+      feature.riskKnowledge +
+        effort / Math.max(feature.size, feature.complexity),
       1
     );
   }
 
-  static gatherKnowledge(project: Project, feature: Feature, effort: number): void {
+  static gatherKnowledge(
+    project: Project,
+    feature: Feature,
+    effort: number
+  ): void {
     if (effort <= 0 || effort > project.testEffort) {
       throw new Error("testing: invalid effort");
     }
@@ -24,7 +33,12 @@ export class TestFunctions {
     );
   }
 
-  static findDefects(project: Project, feature: Feature, type: DefectType, effort: number): void {
+  static findDefects(
+    project: Project,
+    feature: Feature,
+    type: DefectType,
+    effort: number
+  ): void {
     if (effort <= 0 || effort > project.testEffort) {
       throw new Error("testing: invalid effort");
     }
@@ -35,7 +49,7 @@ export class TestFunctions {
     const unknownDefects = feature
       .getDefects()
       .filter((defect) => !defect.isFound);
-    
+
     unknownDefects.forEach((defect) => {
       const baseChance = Math.random();
       const effortFactor = 1 + effort / feature.size; // higher effort means higher chance to find defects

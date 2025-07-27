@@ -1,9 +1,9 @@
 import { TestTask } from "./TestTask.js";
+import { TestFunctions } from "./TestFunctions.js";
 import { Project } from "../Project.js";
 import { Feature } from "../Feature.js";
-import { TestFunctions } from "./TestFunctions.js";
 
-export class RiskAssessmentTask extends TestTask {
+export class SecurityTestTask extends TestTask {
   private _features: Feature[];
 
   constructor(
@@ -24,12 +24,17 @@ export class RiskAssessmentTask extends TestTask {
   done(): void {
     const effortPerFeature = this.size / this._features.length;
     this._features.forEach((feature) => {
-      TestFunctions.riskAssessment(this.project, feature, effortPerFeature);
+      TestFunctions.findDefects(
+        this.project,
+        feature,
+        "security",
+        effortPerFeature
+      );
     });
     super.done();
   }
 
   getType(): string {
-    return "RiskAssessmentTask";
+    return "SecurityTestTask";
   }
 }

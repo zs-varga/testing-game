@@ -2,15 +2,41 @@ import React from "react";
 import "./Card.css";
 import "./TestTaskCard.css";
 
-const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) => {
+const TestTaskCard = ({
+  task,
+  onChange,
+  features,
+  idx,
+  testEffort,
+  onDelete,
+}) => {
   // Helper: is feature selectable for current action
-  const isFeatureSelectable = (feature) => {
-    if (task.action === "Knowledge Gathering") return true;
-    if (task.action === "Exploratory Testing")
-      return feature.isDone && feature.isDone();
-    if (task.action === "Risk Assessment") return true;
+  const isFeatureSelectable = (feature, task) => {
+    // knowledge gathering can be done on all features
+    if (["Knowledge Gathering"].includes(task.action)) {
+      return true;
+    }
+
+    // risk assessment can be done on features that we have knowledge about
+    if (["Risk Assessment"].includes(task.action)) {
+      return feature.knowledge > 0;
+    }
+
+    // focused testing can be done on features that are already done
+    if (
+      [
+        "Performance Testing",
+        "Security Testing",
+        "Usability Testing",
+        "Exploratory Testing",
+        "Functional Testing",
+      ].includes(task.action)
+    ) {
+      return feature.isDone();
+    }
+
     return false;
-  }
+  };
 
   // Ensure selectedFeatures is always an array
   const selectedFeatures = Array.isArray(task.selectedFeatures)
@@ -19,17 +45,15 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
 
   // When changing action, unselect features that become disabled
   const handleActionChange = (newAction) => {
+    const newTask = { ...task, action: newAction };
     const newSelectable = features
-      .filter((f) => {
-        if (newAction === "Knowledge Gathering") return true;
-        if (newAction === "Risk Assessment") return true;
-        if (newAction === "Exploratory Testing") return f.isDone && f.isDone();
-        return false;
-      })
+      .filter((f) => isFeatureSelectable(f, newTask))
       .map((f) => f.id);
+
     const filteredSelected = selectedFeatures.filter((id) =>
       newSelectable.includes(id)
     );
+
     onChange({
       ...task,
       action: newAction,
@@ -97,6 +121,18 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
                 <input
                   type="radio"
                   name={`action-${idx}`}
+                  value="Risk Assessment"
+                  checked={task.action === "Risk Assessment"}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Risk Assessment
+              </label>
+            </li>
+            <li>
+              <label>
+                <input
+                  type="radio"
+                  name={`action-${idx}`}
                   value="Exploratory Testing"
                   checked={task.action === "Exploratory Testing"}
                   onChange={(e) => handleActionChange(e.target.value)}
@@ -109,11 +145,47 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
                 <input
                   type="radio"
                   name={`action-${idx}`}
-                  value="Risk Assessment"
-                  checked={task.action === "Risk Assessment"}
+                  value="Functional Testing"
+                  checked={task.action === "Functional Testing"}
                   onChange={(e) => handleActionChange(e.target.value)}
                 />{" "}
-                Risk Assessment
+                Functional Testing
+              </label>
+            </li>
+            <li>
+              <label>
+                <input
+                  type="radio"
+                  name={`action-${idx}`}
+                  value="Performance Testing"
+                  checked={task.action === "Performance Testing"}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Performance Testing
+              </label>
+            </li>
+            <li>
+              <label>
+                <input
+                  type="radio"
+                  name={`action-${idx}`}
+                  value="Usability Testing"
+                  checked={task.action === "Usability Testing"}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Usability Testing
+              </label>
+            </li>
+            <li>
+              <label>
+                <input
+                  type="radio"
+                  name={`action-${idx}`}
+                  value="Security Testing"
+                  checked={task.action === "Security Testing"}
+                  onChange={(e) => handleActionChange(e.target.value)}
+                />{" "}
+                Security Testing
               </label>
             </li>
           </ul>
@@ -126,13 +198,15 @@ const TestTaskCard = ({ task, onChange, features, idx, testEffort, onDelete }) =
               .map((feature) => (
                 <li
                   key={feature.id}
-                  style={{ opacity: isFeatureSelectable(feature) ? 1 : 0.5 }}
+                  style={{
+                    opacity: isFeatureSelectable(feature, task) ? 1 : 0.5,
+                  }}
                 >
                   <label>
                     <input
                       type="checkbox"
                       checked={selectedFeatures.includes(feature.id)}
-                      disabled={!isFeatureSelectable(feature)}
+                      disabled={!isFeatureSelectable(feature, task)}
                       onChange={() => handleFeatureToggle(feature.id)}
                     />{" "}
                     {feature.name}

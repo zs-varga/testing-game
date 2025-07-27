@@ -1,8 +1,7 @@
-
 .task-card.test-task {
   border: 1px solid #ccc;
   border-radius: 12px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
@@ -55,8 +54,8 @@
   margin-right: 13px;
 }
 
-
-.task-card.test-task .action-list, .feature-list {
+.task-card.test-task .action-list,
+.feature-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -65,7 +64,8 @@
   gap: 4px;
 }
 
-.task-card.test-task .action-list li, .feature-list li {
+.task-card.test-task .action-list li,
+.feature-list li {
   margin: 0;
 }
 
