@@ -50,9 +50,7 @@ export class Game implements IGame {
     return project;
   }
 
-  generateFeatures(project: Project, n: number): IFeature[] {
-    if (n <= 0) return [];
-
+  generateFeatures(project: Project): IFeature[] {
     const FEATURE_NAMES = [
       "Authentication",
       "User Management",
@@ -83,12 +81,10 @@ export class Game implements IGame {
       .sort((a, b) => a.sort - b.sort)
       .map(({ name }) => name);
 
-    const MAX_SIZE = 7;
-    const MAX_COMPLEXITY = 7;
     const createdFeatures: IFeature[] = [];
 
     // Create n new features
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < project.featureCount; i++) {
       const id = project.getNextId();
       const featureName = FEATURE_NAMES[i % FEATURE_NAMES.length];
       
@@ -96,8 +92,8 @@ export class Game implements IGame {
         id,
         featureName,
         project,
-        Math.floor(Math.random() * MAX_SIZE) + 1, // size
-        Math.floor(Math.random() * MAX_COMPLEXITY) + 1, // complexity
+        Math.floor(Math.random() * project.maxFeatureSize) + 1, // size
+        Math.floor(Math.random() * project.maxFeatureComplexity) + 1, // complexity
         0, // knowledge
         "new"
       );
@@ -171,27 +167,20 @@ export class Game implements IGame {
     const createdDefects: IDefect[] = [];
     // Create defects
     for (let i = 1; i <= defectCount; i++) {
-      // --- Weighted defect type selection based on risks ---
-      const risks = (task as any).risks || {
-        functionality: 0.25,
-        usability: 0.25,
-        performance: 0.25,
-        security: 0.25,
-      };
+      // Weighted defect type selection based on risks
       const defectTypes: DefectType[] = ["functionality", "usability", "performance", "security"];
-      const weights = defectTypes.map(type => risks[type]);
+      const weights = defectTypes.map(type => (task as Feature).risks[type]);
       const totalWeight = weights.reduce((a, b) => a + b, 0);
-      let rand = Math.random() * totalWeight;
       let cumulative = 0;
       let type = defectTypes[0];
       for (let j = 0; j < defectTypes.length; j++) {
         cumulative += weights[j];
-        if (rand < cumulative) {
+        if (Math.random() * totalWeight < cumulative) {
           type = defectTypes[j];
           break;
         }
       }
-      // --- End weighted selection ---
+      
       const randomSeverity = Math.floor(Math.random() * 3) + 1; // 1-3
       const randomStealth = Math.random(); // 0-1
 
@@ -223,11 +212,9 @@ export class Game implements IGame {
     task: ITask,
     maxDefects: number = 3
   ): Defect[] {
-    // 10% chance of regression, introducing maximum 2 new defects
-    // TO OTHER FEATURES
-    const REGRESSION_RISK = 0.5;
+    // Use project-level regression risk
     const regressionChance = Math.random();
-    if (regressionChance > REGRESSION_RISK) {
+    if (regressionChance > project.regressionRisk) {
       return [];
     }
 
@@ -270,6 +257,10 @@ export class Game implements IGame {
   initializeProject(project: Project): void {
     project.devEffort = 10;
     project.testEffort = 5;
-    this.generateFeatures(project, 5);
+    project.regressionRisk = 0.2;
+    project.maxFeatureSize = 7;
+    project.maxFeatureComplexity = 7;
+    project.featureCount = 5;
+    this.generateFeatures(project);
   }
 }

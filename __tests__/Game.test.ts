@@ -59,11 +59,10 @@ describe('Game Engine', () => {
     });
 
     test('should generate specified number of features', () => {
-      const features = game.generateFeatures(project, 3);
-      
+      project.featureCount = 3;
+      const features = game.generateFeatures(project);
       expect(features.length).toBe(3);
       expect(project.backlog.length).toBe(3);
-      
       features.forEach(feature => {
         expect(feature).toBeInstanceOf(Feature);
         expect(feature.project).toBe(project);
@@ -75,28 +74,25 @@ describe('Game Engine', () => {
       });
     });
 
-    test('should not generate features when count is zero or negative', () => {
-      const features1 = game.generateFeatures(project, 0);
-      const features2 = game.generateFeatures(project, -1);
-      
-      expect(features1.length).toBe(0);
-      expect(features2.length).toBe(0);
-      expect(project.backlog.length).toBe(0);
+    test('should throw if featureCount is set to zero or negative', () => {
+      expect(() => { project.featureCount = 0; }).toThrow('featureCount must be positive');
+      expect(() => { project.featureCount = -1; }).toThrow('featureCount must be positive');
+      // Value should remain unchanged (default 5)
+      expect(project.featureCount).toBe(5);
     });
 
     test('should generate features with unique IDs', () => {
-      const features = game.generateFeatures(project, 5);
+      project.featureCount = 5;
+      const features = game.generateFeatures(project);
       const ids = features.map(f => f.id);
       const uniqueIds = new Set(ids);
-      
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     test('should cycle through feature names when generating more features than names', () => {
-      const features = game.generateFeatures(project, 10);
-      
+      project.featureCount = 10;
+      const features = game.generateFeatures(project);
       expect(features.length).toBe(10);
-      // Should cycle through the 8 available feature names
       const names = features.map(f => f.name);
       expect(names.length).toBe(10);
     });

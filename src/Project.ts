@@ -1,8 +1,8 @@
-import { IFeature, Feature } from './Feature.js';
-import { IDefect, Defect } from './Defect.js';
-import { Game } from './Game.js';
-import { Sprint } from './Sprint.js';
-import { ITestTask } from './TestTask/TestTask.js';
+import { IFeature, Feature } from "./Feature.js";
+import { IDefect, Defect } from "./Defect.js";
+import { Game } from "./Game.js";
+import { Sprint } from "./Sprint.js";
+import { ITestTask } from "./TestTask/TestTask.js";
 
 export interface IProject {
   id: number;
@@ -24,6 +24,10 @@ export class Project implements IProject {
   private _defects: IDefect[];
   private _sprints: Sprint[];
   private _game: Game;
+  private _featureCount: number = 5;
+  private _regressionRisk: number = 0.1;
+  private _maxFeatureSize: number = 7;
+  private _maxFeatureComplexity: number = 7;
 
   constructor(
     id: number,
@@ -42,6 +46,11 @@ export class Project implements IProject {
     this._defects = defects;
     this._sprints = [];
     this._game = game;
+    
+    this._regressionRisk = 0.2;
+    this._maxFeatureSize = 7;
+    this._maxFeatureComplexity = 7;
+    this._featureCount = 5;
   }
 
   // Getters
@@ -77,28 +86,52 @@ export class Project implements IProject {
     return this._game;
   }
 
+  get regressionRisk(): number {
+    return this._regressionRisk;
+  }
+
+  get maxFeatureSize(): number {
+    return this._maxFeatureSize;
+  }
+
+  get maxFeatureComplexity(): number {
+    return this._maxFeatureComplexity;
+  }
+
+  get featureCount(): number {
+    return this._featureCount;
+  }
+
   // Setters
   set id(value: number) {
     if (value > 0) {
       this._id = value;
+    } else {
+      throw new Error('Project id must be positive.');
     }
   }
 
   set name(value: string) {
     if (value.trim().length > 0) {
       this._name = value.trim();
+    } else {
+      throw new Error('Project name must be non-empty.');
     }
   }
 
   set devEffort(value: number) {
     if (value >= 0) {
       this._devEffort = value;
+    } else {
+      throw new Error('devEffort must be non-negative.');
     }
   }
 
   set testEffort(value: number) {
     if (value >= 0) {
       this._testEffort = value;
+    } else {
+      throw new Error('testEffort must be non-negative.');
     }
   }
 
@@ -110,12 +143,44 @@ export class Project implements IProject {
     this._defects = value;
   }
 
+  set regressionRisk(value: number) {
+    if (value >= 0 && value <= 1) {
+      this._regressionRisk = value;
+    } else {
+      throw new Error('regressionRisk must be between 0 and 1.');
+    }
+  }
+
+  set maxFeatureSize(value: number) {
+    if (value > 0) {
+      this._maxFeatureSize = value;
+    } else {
+      throw new Error('maxFeatureSize must be positive.');
+    }
+  }
+
+  set maxFeatureComplexity(value: number) {
+    if (value > 0) {
+      this._maxFeatureComplexity = value;
+    } else {
+      throw new Error('maxFeatureComplexity must be positive.');
+    }
+  }
+
+  set featureCount(value: number) {
+    if (value > 0) {
+      this._featureCount = value;
+    } else {
+      throw new Error('featureCount must be positive.');
+    }
+  }
+
   addToBacklog(item: IFeature | IDefect | ITestTask): void {
     this.backlog.push(item);
   }
 
   removeFromBacklog(itemId: number): boolean {
-    const index = this.backlog.findIndex(item => item.id === itemId);
+    const index = this.backlog.findIndex((item) => item.id === itemId);
     if (index !== -1) {
       this.backlog.splice(index, 1);
       return true;
@@ -128,7 +193,7 @@ export class Project implements IProject {
   }
 
   removeDefect(defectId: number): boolean {
-    const index = this.defects.findIndex(defect => defect.id === defectId);
+    const index = this.defects.findIndex((defect) => defect.id === defectId);
     if (index !== -1) {
       this.defects.splice(index, 1);
       return true;
@@ -138,44 +203,44 @@ export class Project implements IProject {
 
   getTaskById(id: number): IFeature | IDefect | ITestTask | undefined {
     // First search in the backlog
-    const backlogTask = this.backlog.find(task => task.id === id);
+    const backlogTask = this.backlog.find((task) => task.id === id);
     if (backlogTask) {
       return backlogTask;
     }
-    
+
     // If not found in backlog, search in defects
-    const defectTask = this.defects.find(defect => defect.id === id);
+    const defectTask = this.defects.find((defect) => defect.id === id);
     if (defectTask) {
       return defectTask;
     }
-    
+
     return undefined;
   }
 
   getMaxId(): number {
     let maxId = 0;
-    
+
     // Check backlog for highest ID
-    this.backlog.forEach(task => {
+    this.backlog.forEach((task) => {
       if (task.id > maxId) {
         maxId = task.id;
       }
     });
-    
+
     // Check defects for highest ID
-    this.defects.forEach(defect => {
+    this.defects.forEach((defect) => {
       if (defect.id > maxId) {
         maxId = defect.id;
       }
     });
 
     // Check sprints for highest ID
-    this.sprints.forEach(sprint => {
+    this.sprints.forEach((sprint) => {
       if (sprint.id > maxId) {
         maxId = sprint.id;
       }
     });
-    
+
     return maxId;
   }
 
@@ -196,6 +261,8 @@ export class Project implements IProject {
   }
 
   getCurrentSprint(): Sprint | undefined {
-    return this._sprints.length > 0 ? this._sprints[this._sprints.length - 1] : undefined;
+    return this._sprints.length > 0
+      ? this._sprints[this._sprints.length - 1]
+      : undefined;
   }
 }

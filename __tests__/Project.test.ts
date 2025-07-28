@@ -149,11 +149,8 @@ describe('Project Class', () => {
     });
 
     test('should not allow negative effort values', () => {
-      project.devEffort = -5;
-      expect(project.devEffort).toBe(0); // Should be set to 0
-
-      project.testEffort = -3;
-      expect(project.testEffort).toBe(0); // Should be set to 0
+      expect(() => { project.devEffort = -5; }).toThrow('devEffort must be non-negative');
+      expect(() => { project.testEffort = -3; }).toThrow('testEffort must be non-negative');
     });
   });
 
@@ -161,22 +158,16 @@ describe('Project Class', () => {
     test('should validate ID setter', () => {
       project.id = 10;
       expect(project.id).toBe(10);
-      
-      project.id = 0; // Invalid
-      expect(project.id).toBe(10); // Should remain unchanged
-      
-      project.id = -5; // Invalid
+      expect(() => { project.id = 0; }).toThrow('Project id must be positive');
+      expect(() => { project.id = -5; }).toThrow('Project id must be positive');
       expect(project.id).toBe(10); // Should remain unchanged
     });
 
     test('should validate name setter', () => {
       project.name = 'New Name';
       expect(project.name).toBe('New Name');
-      
-      project.name = '   '; // Empty after trim
-      expect(project.name).toBe('New Name'); // Should remain unchanged
-      
-      project.name = ''; // Empty
+      expect(() => { project.name = '   '; }).toThrow('Project name must be non-empty');
+      expect(() => { project.name = ''; }).toThrow('Project name must be non-empty');
       expect(project.name).toBe('New Name'); // Should remain unchanged
     });
   });
