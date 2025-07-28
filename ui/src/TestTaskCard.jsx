@@ -103,92 +103,19 @@ const TestTaskCard = ({
         </div>
         <div className="field-group vertical">
           <label className="field-label">Action</label>
-          <ul className="action-list">
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Knowledge Gathering"
-                  checked={task.action === "Knowledge Gathering"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Knowledge Gathering
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Risk Assessment"
-                  checked={task.action === "Risk Assessment"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Risk Assessment
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Exploratory Testing"
-                  checked={task.action === "Exploratory Testing"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Exploratory Testing
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Functional Testing"
-                  checked={task.action === "Functional Testing"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Functional Testing
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Performance Testing"
-                  checked={task.action === "Performance Testing"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Performance Testing
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Usability Testing"
-                  checked={task.action === "Usability Testing"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Usability Testing
-              </label>
-            </li>
-            <li>
-              <label>
-                <input
-                  type="radio"
-                  name={`action-${idx}`}
-                  value="Security Testing"
-                  checked={task.action === "Security Testing"}
-                  onChange={(e) => handleActionChange(e.target.value)}
-                />{" "}
-                Security Testing
-              </label>
-            </li>
-          </ul>
+          <select
+            className="action-select"
+            value={task.action}
+            onChange={(e) => handleActionChange(e.target.value)}
+          >
+            <option value="Knowledge Gathering">Knowledge Gathering</option>
+            <option value="Risk Assessment">Risk Assessment</option>
+            <option value="Exploratory Testing">Exploratory Testing</option>
+            <option value="Functional Testing">Functional Testing</option>
+            <option value="Performance Testing">Performance Testing</option>
+            <option value="Usability Testing">Usability Testing</option>
+            <option value="Security Testing">Security Testing</option>
+          </select>
         </div>
         <div className="feature-multiselect field-group vertical">
           <label className="field-label">Focus</label>

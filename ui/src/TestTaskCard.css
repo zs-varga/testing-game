@@ -54,19 +54,13 @@
   margin-right: 13px;
 }
 
-.task-card.test-task .action-list,
-.feature-list {
+.task-card.test-task .feature-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.task-card.test-task .action-list li,
-.feature-list li {
-  margin: 0;
+  gap: 2px;
 }
 
 .task-card.test-task .field-group {
@@ -156,4 +150,27 @@
   height: 28px;
   display: flex;
   align-items: center;
+}
+
+.task-card.test-task select {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 6px 10px 6px 10px;
+  font-size: 1em;
+  color: #666;
+  font-weight: 500;
+  width: 100%;
+  margin-right: 20px;
+  outline: none;
+}
+
+.task-card.test-task select:focus {
+  border-color: #3366ff;
+  box-shadow: 0 0 0 2px rgba(51, 102, 255, 0.13);
+}
+
+.task-card.test-task select option {
+  color: #334155;
+  background: #fff;
+  font-weight: 400;
 }
