@@ -28,6 +28,7 @@ export class Project implements IProject {
   private _regressionRisk: number = 0.1;
   private _maxFeatureSize: number = 7;
   private _maxFeatureComplexity: number = 7;
+  private _maxStealth: number = 1;
 
   constructor(
     id: number,
@@ -46,7 +47,7 @@ export class Project implements IProject {
     this._defects = defects;
     this._sprints = [];
     this._game = game;
-    
+
     this._regressionRisk = 0.2;
     this._maxFeatureSize = 7;
     this._maxFeatureComplexity = 7;
@@ -102,12 +103,16 @@ export class Project implements IProject {
     return this._featureCount;
   }
 
+  get maxStealth(): number {
+    return this._maxStealth;
+  }
+
   // Setters
   set id(value: number) {
     if (value > 0) {
       this._id = value;
     } else {
-      throw new Error('Project id must be positive.');
+      throw new Error("Project id must be positive.");
     }
   }
 
@@ -115,7 +120,7 @@ export class Project implements IProject {
     if (value.trim().length > 0) {
       this._name = value.trim();
     } else {
-      throw new Error('Project name must be non-empty.');
+      throw new Error("Project name must be non-empty.");
     }
   }
 
@@ -123,7 +128,7 @@ export class Project implements IProject {
     if (value >= 0) {
       this._devEffort = value;
     } else {
-      throw new Error('devEffort must be non-negative.');
+      throw new Error("devEffort must be non-negative.");
     }
   }
 
@@ -131,7 +136,7 @@ export class Project implements IProject {
     if (value >= 0) {
       this._testEffort = value;
     } else {
-      throw new Error('testEffort must be non-negative.');
+      throw new Error("testEffort must be non-negative.");
     }
   }
 
@@ -147,7 +152,7 @@ export class Project implements IProject {
     if (value >= 0 && value <= 1) {
       this._regressionRisk = value;
     } else {
-      throw new Error('regressionRisk must be between 0 and 1.');
+      throw new Error("regressionRisk must be between 0 and 1.");
     }
   }
 
@@ -155,7 +160,7 @@ export class Project implements IProject {
     if (value > 0) {
       this._maxFeatureSize = value;
     } else {
-      throw new Error('maxFeatureSize must be positive.');
+      throw new Error("maxFeatureSize must be positive.");
     }
   }
 
@@ -163,7 +168,7 @@ export class Project implements IProject {
     if (value > 0) {
       this._maxFeatureComplexity = value;
     } else {
-      throw new Error('maxFeatureComplexity must be positive.');
+      throw new Error("maxFeatureComplexity must be positive.");
     }
   }
 
@@ -171,10 +176,17 @@ export class Project implements IProject {
     if (value > 0) {
       this._featureCount = value;
     } else {
-      throw new Error('featureCount must be positive.');
+      throw new Error("featureCount must be positive.");
     }
   }
 
+  set maxStealth(value: number) {
+    if (value > 0) {
+      this._maxStealth = value;
+    } else {
+      throw new Error("maxStealth must be positive.");
+    }
+  }
   addToBacklog(item: IFeature | IDefect | ITestTask): void {
     this.backlog.push(item);
   }

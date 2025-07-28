@@ -75,7 +75,7 @@ export class Game implements IGame {
       "Workflow Engine",
       "Calendar Integration",
       "Email Integration",
-      "Payment Processing"
+      "Payment Processing",
     ]
       .map((name) => ({ name, sort: Math.random() })) // Randomized order
       .sort((a, b) => a.sort - b.sort)
@@ -86,8 +86,9 @@ export class Game implements IGame {
     // Create n new features
     for (let i = 0; i < project.featureCount; i++) {
       const id = project.getNextId();
-      const featureName = FEATURE_NAMES[i % FEATURE_NAMES.length];
-      
+      const featureName =
+        i + 1 + ". " + FEATURE_NAMES[i % FEATURE_NAMES.length];
+
       const feature = new Feature(
         id,
         featureName,
@@ -168,8 +169,13 @@ export class Game implements IGame {
     // Create defects
     for (let i = 1; i <= defectCount; i++) {
       // Weighted defect type selection based on risks
-      const defectTypes: DefectType[] = ["functionality", "usability", "performance", "security"];
-      const weights = defectTypes.map(type => (task as Feature).risks[type]);
+      const defectTypes: DefectType[] = [
+        "functionality",
+        "usability",
+        "performance",
+        "security",
+      ];
+      const weights = defectTypes.map((type) => (task as Feature).risks[type]);
       const totalWeight = weights.reduce((a, b) => a + b, 0);
       let cumulative = 0;
       let type = defectTypes[0];
@@ -180,9 +186,9 @@ export class Game implements IGame {
           break;
         }
       }
-      
+
       const randomSeverity = Math.floor(Math.random() * 3) + 1; // 1-3
-      const randomStealth = Math.random(); // 0-1
+      const randomStealth = Math.random() * project.maxStealth; // 0-maxStealth
 
       const newDefect = new Defect(
         project.getNextId(),
@@ -193,7 +199,7 @@ export class Game implements IGame {
         task, // causeTask
         randomSeverity, // severity
         type, // type
-        randomStealth, // stealth
+        randomStealth // stealth
       );
 
       // Link the defect to the task
@@ -257,10 +263,11 @@ export class Game implements IGame {
   initializeProject(project: Project): void {
     project.devEffort = 10;
     project.testEffort = 5;
-    project.regressionRisk = 0.2;
-    project.maxFeatureSize = 7;
-    project.maxFeatureComplexity = 7;
-    project.featureCount = 5;
+    project.regressionRisk = 0.1;
+    project.maxFeatureSize = 8;
+    project.maxFeatureComplexity = 6;
+    project.featureCount = 10;
+    project.maxStealth = 0.8;
     this.generateFeatures(project);
   }
 }

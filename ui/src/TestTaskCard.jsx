@@ -195,6 +195,7 @@ const TestTaskCard = ({
           <ul className="feature-list">
             {features
               .filter((f) => f.getType && f.getType() === "Feature")
+              .sort((a, b) => a.id - b.id)
               .map((feature) => (
                 <li
                   key={feature.id}
