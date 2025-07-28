@@ -53,9 +53,17 @@ export class Feature extends Task implements IFeature {
   }
 
   getDefects(): IDefect[] {
-    return this.project.defects.filter(
-      (defect) => defect.causeTask.id === this.id
+    const defects = this.project.defects.filter(
+      (defect) => defect.affectedTask && defect.affectedTask.id === this.id
     );
+    return defects;
+  }
+
+  getFoundDefects(): IDefect[] {
+    const defects = this.getDefects().filter(
+      (defect) => defect.isFound === true
+    );
+    return defects;
   }
 
   done(): void {

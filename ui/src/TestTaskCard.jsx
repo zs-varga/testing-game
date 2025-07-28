@@ -72,6 +72,24 @@ const TestTaskCard = ({
     }
   };
 
+  // Compute selectable feature IDs
+  const selectableFeatureIds = features
+    .filter((f) => f.getType && f.getType() === "Feature" && isFeatureSelectable(f, task))
+    .map((f) => f.id);
+
+  const allSelected = selectableFeatureIds.length > 0 && selectableFeatureIds.every((id) => selectedFeatures.includes(id));
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      // Deselect all
+      onChange({ ...task, selectedFeatures: selectedFeatures.filter((id) => !selectableFeatureIds.includes(id)) });
+    } else {
+      // Select all
+      const newSelected = Array.from(new Set([...selectedFeatures, ...selectableFeatureIds]));
+      onChange({ ...task, selectedFeatures: newSelected });
+    }
+  };
+
   return (
     <div className="task-card test-task">
       <div className="task-header">
@@ -120,6 +138,16 @@ const TestTaskCard = ({
         <div className="feature-multiselect field-group vertical">
           <label className="field-label">Focus</label>
           <ul className="feature-list">
+            <li className="feature-list-select-all">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={handleSelectAll}
+                  disabled={selectableFeatureIds.length === 0}
+                /> Select All
+              </label>
+            </li>
             {features
               .filter((f) => f.getType && f.getType() === "Feature")
               .sort((a, b) => a.id - b.id)

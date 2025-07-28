@@ -9,6 +9,7 @@ export type DefectType =
 
 export interface IDefect extends ITask {
   causeTask: ITask;
+  affectedTask: ITask;
   severity: number;
   defectType: DefectType;
   stealth: number;
@@ -17,6 +18,7 @@ export interface IDefect extends ITask {
 
 export class Defect extends Task implements IDefect {
   private _causeTask: ITask;
+  private _affectedTask: ITask;
   private _severity: number;
   private _defectType: DefectType;
   private _stealth: number;
@@ -29,6 +31,7 @@ export class Defect extends Task implements IDefect {
     size: number = 1,
     complexity: number = 1,
     causeTask: ITask,
+    affectedTask: ITask,
     severity: number = 1,
     defectType: DefectType = "functionality",
     stealth: number = 0,
@@ -37,6 +40,7 @@ export class Defect extends Task implements IDefect {
   ) {
     super(id, name, project, size, complexity, status);
     this._causeTask = causeTask;
+    this._affectedTask = affectedTask;
     this._severity = severity;
     this._defectType = defectType;
     this._stealth = stealth;
@@ -49,8 +53,13 @@ export class Defect extends Task implements IDefect {
     return this._defectType;
   }
 
+
   get causeTask(): ITask {
     return this._causeTask;
+  }
+
+  get affectedTask(): ITask {
+    return this._affectedTask;
   }
 
   get severity(): number {
@@ -71,8 +80,13 @@ export class Defect extends Task implements IDefect {
     this._defectType = value;
   }
 
+
   set causeTask(value: ITask) {
     this._causeTask = value;
+  }
+
+  set affectedTask(value: ITask) {
+    this._affectedTask = value;
   }
 
   set severity(value: number) {
@@ -99,11 +113,8 @@ export class Defect extends Task implements IDefect {
   done(): void {
     super.done();
 
-    // 10% chance of regression, introducing maximum 2 new defects
-    // to other tasks
-    const REGRESSION_RISK = 0.1;
-    const regressionChance = Math.random();
-    if (regressionChance < REGRESSION_RISK) {
+    // introducing maximum 2 new defects, to other tasks
+    if (Math.random() < this.project.regressionRisk) {
       const newDefects = this.project.game.generateRegressionDefects(
         this.project,
         this,

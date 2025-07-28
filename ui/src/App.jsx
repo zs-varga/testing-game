@@ -347,6 +347,7 @@ function Board({
               size={f.size}
               complexity={f.complexity}
               severity={f.severity}
+              affectedTask={f.affectedTask}
             />
           ) : (
             <FeatureCard
@@ -357,6 +358,7 @@ function Board({
               knowledge={f.knowledge}
               riskKnowledge={f.riskKnowledge}
               risks={f.risks ? f.risks : []}
+              foundDefects={f.getFoundDefects().length}
             />
           )
         )}
@@ -371,6 +373,7 @@ function Board({
               size={t.size}
               complexity={t.complexity}
               severity={t.severity}
+              affectedTask={t.affectedTask}
             />
           ) : (
             <FeatureCard
@@ -381,6 +384,7 @@ function Board({
               knowledge={t.knowledge}
               riskKnowledge={t.riskKnowledge}
               risks={t.risks ? t.risks : []}
+              foundDefects={t.getFoundDefects().length}
             />
           )
         )}
@@ -418,6 +422,7 @@ function Board({
                 size={item.size}
                 complexity={item.complexity}
                 severity={item.severity}
+                affectedTask={item.affectedTask}
               />
             ) : (
               <FeatureCard
@@ -428,6 +433,7 @@ function Board({
                 knowledge={item.knowledge}
                 riskKnowledge={item.riskKnowledge}
                 risks={item.risks ? item.risks : []}
+                foundDefects={item.getFoundDefects().length}
               />
             )
           )}

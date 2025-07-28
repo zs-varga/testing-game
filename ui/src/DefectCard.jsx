@@ -2,7 +2,7 @@ import React from "react";
 import "./Card.css";
 import "./DefectCard.css";
 
-const DefectCard = ({ name, size, complexity, severity }) => {
+const DefectCard = ({ name, size, complexity, severity, affectedTask }) => {
   return (
     <div className="task-card defect">
       <div className="task-header">
@@ -11,7 +11,9 @@ const DefectCard = ({ name, size, complexity, severity }) => {
       </div>
       <div className="task-details">
         <span className="task-detail">Size: {size}</span>
-        <span className="task-detail">Severity: {severity}</span>
+        {affectedTask && (
+          <span className="task-detail">Affects: {affectedTask.name}</span>
+        )}
       </div>
     </div>
   );

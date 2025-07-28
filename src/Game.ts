@@ -197,6 +197,7 @@ export class Game implements IGame {
         Math.floor(Math.random() * task.size) + 1, // size
         Math.floor(Math.random() * task.complexity) + 1, // complexity
         task, // causeTask
+        task, // affectedTask (for normal defects, the affected is the same as the cause)
         randomSeverity, // severity
         type, // type
         randomStealth // stealth
@@ -218,7 +219,6 @@ export class Game implements IGame {
     task: ITask,
     maxDefects: number = 3
   ): Defect[] {
-    // Use project-level regression risk
     const regressionChance = Math.random();
     if (regressionChance > project.regressionRisk) {
       return [];
@@ -234,23 +234,45 @@ export class Game implements IGame {
       return [];
     }
 
+    // Build weights based on number of defects already linked to each feature
+    const featureWeights = otherFeatures.map(
+      (feature) => (feature as Feature).getDefects().length
+    );
+    const totalWeight = featureWeights.reduce((a, b) => a + b, 0);
+
+    // We are simulating defect clustering
+    function weightedRandomFeature() {
+      let r = Math.random() * totalWeight;
+      for (let i = 0; i < otherFeatures.length; i++) {
+        if (r < featureWeights[i]) {
+          return otherFeatures[i];
+        }
+        r -= featureWeights[i];
+      }
+      // Fallback: if all weights are zero, pick a random feature
+      return otherFeatures[Math.floor(Math.random() * otherFeatures.length)];
+    }
+
     const newDefects: Defect[] = [];
     for (let i = 0; i < defectCount; i++) {
-      const randomFeature =
-        otherFeatures[Math.floor(Math.random() * otherFeatures.length)];
+      const randomFeature = weightedRandomFeature();
 
-      const generatedDefects = project.game.generateDefects(
+      // For regression, causeTask is the current task, affectedTask is the randomFeature
+      const regressionDefect = new Defect(
+        project.getNextId(),
+        `Regression: ${randomFeature.name}`,
         project,
-        randomFeature,
-        1
+        Math.floor(Math.random() * randomFeature.size) + 1,
+        Math.floor(Math.random() * randomFeature.complexity) + 1,
+        task, // causeTask
+        randomFeature, // affectedTask
+        Math.floor(Math.random() * 3) + 1, // severity
+        "functionality", // type (could be improved)
+        Math.random() * project.maxStealth // stealth
       );
 
-      if (generatedDefects.length > 0) {
-        generatedDefects[0].causeTask = task; // Set the cause task to the current task
-        generatedDefects[0].addLinkedTask(task);
-        task.addLinkedTask(generatedDefects[0]);
-        newDefects.push(generatedDefects[0] as Defect);
-      }
+      project.addDefect(regressionDefect);
+      newDefects.push(regressionDefect);
     }
 
     if (newDefects.length === 0) {
