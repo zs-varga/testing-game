@@ -12,13 +12,8 @@ import { SecurityTestTask } from "../../src/TestTask/SecurityTestTask";
 import { UsabilityTestTask } from "../../src/TestTask/UsabilityTestTask";
 import { FunctionalTestTask } from "../../src/TestTask/FunctionalTestTask";
 
-const TABS = [
-  { key: "planning", label: "Sprint Planning" },
-  { key: "statistics", label: "Statistics" },
-];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("planning");
   const [project, setProject] = useState(null);
   const [features, setFeatures] = useState([]);
   const [devTasks, setDevTasks] = useState([]);
@@ -211,77 +206,55 @@ export default function App() {
         </div>
       </header>
 
-      <div className="tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            className={`tab-button${activeTab === tab.key ? " active" : ""}`}
-            onClick={() => setActiveTab(tab.key)}
-            disabled={tab.key === "statistics"}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       <div className="tab-content-container">
-        {activeTab === "planning" && (
-          <>
-            <Board
-              features={features}
-              devTasks={devTasks}
-              maxDevEffort={maxDevEffort}
-              testEffort={testEffort}
-              setValidationError={setValidationError}
-              testTasks={testTasks}
-              setTestTasks={setTestTasks}
-            />
-            {showTestEffortModal && (
-              <div className="modal-overlay">
-                <div className="modal">
-                  <h3>Test Effort Not Fully Utilized</h3>
-                  <p>
-                    Test effort is not fully utilized (
-                    {testTasks.reduce((sum, t) => sum + t.effort, 0)} /{" "}
-                    {testEffort}).
-                    <br />
-                    Do you want to proceed with sprint execution?
-                  </p>
-                  <div className="modal-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleModalConfirm}
-                    >
-                      Proceed
-                    </button>
-                    <button className="btn" onClick={handleModalCancel}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+        <Board
+          features={features}
+          devTasks={devTasks}
+          maxDevEffort={maxDevEffort}
+          testEffort={testEffort}
+          setValidationError={setValidationError}
+          testTasks={testTasks}
+          setTestTasks={setTestTasks}
+        />
+        {showTestEffortModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Test Effort Not Fully Utilized</h3>
+              <p>
+                Test effort is not fully utilized (
+                {testTasks.reduce((sum, t) => sum + t.effort, 0)} /{" "}
+                {testEffort}).
+                <br />
+                Do you want to proceed with sprint execution?
+              </p>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleModalConfirm}
+                >
+                  Proceed
+                </button>
+                <button className="btn" onClick={handleModalCancel}>
+                  Cancel
+                </button>
               </div>
-            )}
-            {showGameEndModal && (
-              <div className="modal-overlay">
-                <div className="modal">
-                  <h3>Game Over</h3>
-                  <p>{gameResult}</p>
-                  <div className="modal-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleStartNewGame}
-                    >
-                      Start New Game
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
-        {activeTab === "statistics" && (
-          <div className="tab-content">
-            <p>Statistics and past sprints will be available here soon...</p>
+        {showGameEndModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Game Over</h3>
+              <p>{gameResult}</p>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleStartNewGame}
+                >
+                  Start New Game
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
