@@ -187,7 +187,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <header className="app-header sticky-header">
         <h1>Testing Game</h1>
         <div className="sprint-controls">
           <span id="sprint-info">
@@ -427,7 +427,7 @@ function Column({
   const showEffort = title === "Test Tasks";
   return (
     <div className="column">
-      <div className="column-header">
+      <div className="column-header sticky-column-header">
         <h3>{title}</h3>
         {showEffort && <span className="effort-sum">{effort} effort</span>}
         {headerButton && <span className="header-btn">{headerButton}</span>}
