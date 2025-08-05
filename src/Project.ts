@@ -26,9 +26,14 @@ export class Project implements IProject {
   private _game: Game;
   private _featureCount: number = 5;
   private _regressionRisk: number = 0.1;
+  private _minFeatureSize: number = 1;
   private _maxFeatureSize: number = 7;
+  private _minFeatureComplexity: number = 1;
   private _maxFeatureComplexity: number = 7;
   private _maxStealth: number = 1;
+  private _testEffortCoefficient: number = 1;
+  private _testTypeCoefficient: number = 1;
+  private _testKnowledgeCoefficient: number = 1;
 
   constructor(
     id: number,
@@ -50,8 +55,22 @@ export class Project implements IProject {
 
     this._regressionRisk = 0.2;
     this._maxFeatureSize = 7;
+    this._minFeatureSize = 1;
     this._maxFeatureComplexity = 7;
+    this._minFeatureComplexity = 1;
     this._featureCount = 5;
+    this._testEffortCoefficient = 1;
+    this._testTypeCoefficient = 1;
+    this._testKnowledgeCoefficient = 1;
+  }
+
+  // Test coefficient properties
+  get minFeatureSize(): number {
+    return this._minFeatureSize;
+  }
+
+  get minFeatureComplexity(): number {
+    return this._minFeatureComplexity;
   }
 
   // Getters
@@ -107,6 +126,18 @@ export class Project implements IProject {
     return this._maxStealth;
   }
 
+  get testEffortCoefficient(): number {
+    return this._testEffortCoefficient;
+  }
+
+  get testTypeCoefficient(): number {
+    return this._testTypeCoefficient;
+  }
+
+  get testKnowledgeCoefficient(): number {
+    return this._testKnowledgeCoefficient;
+  }
+
   // Setters
   set id(value: number) {
     if (value > 0) {
@@ -156,11 +187,27 @@ export class Project implements IProject {
     }
   }
 
+  set minFeatureSize(value: number) {
+    if (value > 0) {
+      this._minFeatureSize = value;
+    } else {
+      throw new Error("minFeatureSize must be positive.");
+    }
+  }
+
   set maxFeatureSize(value: number) {
     if (value > 0) {
       this._maxFeatureSize = value;
     } else {
       throw new Error("maxFeatureSize must be positive.");
+    }
+  }
+
+  set minFeatureComplexity(value: number) {
+    if (value > 0) {
+      this._minFeatureComplexity = value;
+    } else {
+      throw new Error("minFeatureComplexity must be positive.");
     }
   }
 
@@ -187,6 +234,31 @@ export class Project implements IProject {
       throw new Error("maxStealth must be positive.");
     }
   }
+
+  set testEffortCoefficient(value: number) {
+    if (value > 0) {
+      this._testEffortCoefficient = value;
+    } else {
+      throw new Error("testEffortCoefficient must be positive.");
+    }
+  }
+
+  set testTypeCoefficient(value: number) {
+    if (value > 0) {
+      this._testTypeCoefficient = value;
+    } else {
+      throw new Error("testTypeCoefficient must be positive.");
+    }
+  }
+
+  set testKnowledgeCoefficient(value: number) {
+    if (value > 0) {
+      this._testKnowledgeCoefficient = value;
+    } else {
+      throw new Error("testKnowledgeCoefficient must be positive.");
+    }
+  }
+
   addToBacklog(item: IFeature | IDefect | ITestTask): void {
     this.backlog.push(item);
   }

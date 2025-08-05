@@ -89,22 +89,43 @@ export class Game implements IGame {
       const featureName =
         i + 1 + ". " + FEATURE_NAMES[i % FEATURE_NAMES.length];
 
+      const size =
+        Math.floor(
+          Math.random() * (project.maxFeatureSize - project.minFeatureSize + 1)
+        ) + project.minFeatureSize;
+      const complexity =
+        Math.floor(
+          Math.random() *
+            (project.maxFeatureComplexity - project.minFeatureComplexity + 1)
+        ) + project.minFeatureComplexity;
       const feature = new Feature(
         id,
         featureName,
         project,
-        Math.floor(Math.random() * project.maxFeatureSize) + 1, // size
-        Math.floor(Math.random() * project.maxFeatureComplexity) + 1, // complexity
+        size, // size
+        complexity, // complexity
         0, // knowledge
         "new"
       );
 
-      // Set risks
-      const risks = {
-        functionality: Math.random(),
-        performance: Math.random(),
-        usability: Math.random(),
-        security: Math.random(),
+      // Set risks so each type gets a unique value from [0.6, 0.25, 0.15, 0] randomly
+      const riskTypes = ["functionality", "performance", "usability", "security"] as const;
+      const riskValues = [0.6, 0.25, 0.15, 0];
+      // Shuffle riskValues using Fisher-Yates shuffle
+      for (let i = riskValues.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [riskValues[i], riskValues[j]] = [riskValues[j], riskValues[i]];
+      }
+      const risks: {
+        functionality: number;
+        performance: number;
+        usability: number;
+        security: number;
+      } = {
+        functionality: riskValues[0],
+        performance: riskValues[1],
+        usability: riskValues[2],
+        security: riskValues[3],
       };
       feature.risks = risks;
 
@@ -219,8 +240,7 @@ export class Game implements IGame {
     task: ITask,
     maxDefects: number = 3
   ): Defect[] {
-    const regressionChance = Math.random();
-    if (regressionChance > project.regressionRisk) {
+    if (Math.random() < project.regressionRisk) {
       return [];
     }
 
@@ -256,6 +276,32 @@ export class Game implements IGame {
     const newDefects: Defect[] = [];
     for (let i = 0; i < defectCount; i++) {
       const randomFeature = weightedRandomFeature();
+      let type;
+
+      if (task.getType() === "Feature") {
+        // Weighted defect type selection based on risks
+        const defectTypes: DefectType[] = [
+          "functionality",
+          "usability",
+          "performance",
+          "security",
+        ];
+        const weights = defectTypes.map(
+          (type) => (task as Feature).risks[type]
+        );
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        let cumulative = 0;
+        let type = defectTypes[0];
+        for (let j = 0; j < defectTypes.length; j++) {
+          cumulative += weights[j];
+          if (Math.random() * totalWeight < cumulative) {
+            type = defectTypes[j];
+            break;
+          }
+        }
+      } else {
+        type = (task as IDefect).defectType;
+      }
 
       // For regression, causeTask is the current task, affectedTask is the randomFeature
       const regressionDefect = new Defect(
@@ -267,7 +313,7 @@ export class Game implements IGame {
         task, // causeTask
         randomFeature, // affectedTask
         Math.floor(Math.random() * 3) + 1, // severity
-        "functionality", // type (could be improved)
+        type,
         Math.random() * project.maxStealth // stealth
       );
 
@@ -286,10 +332,17 @@ export class Game implements IGame {
     project.devEffort = 10;
     project.testEffort = 5;
     project.regressionRisk = 0.1;
-    project.maxFeatureSize = 8;
+    project.minFeatureSize = 3;
+    project.maxFeatureSize = 5;
+    project.minFeatureComplexity = 1;
     project.maxFeatureComplexity = 6;
-    project.featureCount = 10;
+    project.featureCount = 5;
     project.maxStealth = 0.8;
+
+    project.testEffortCoefficient = 3;
+    project.testTypeCoefficient = 1.5;
+    project.testKnowledgeCoefficient = 1.5;
+
     this.generateFeatures(project);
   }
 }

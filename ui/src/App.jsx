@@ -52,10 +52,6 @@ export default function App() {
     const currentSprint = project && project.getCurrentSprint();
     setSprintDone(true);
 
-    const sprintHasFeature = currentSprint.devTasks.some(
-      (obj) => obj.getType && obj.getType() === "Feature"
-    );
-
     testTasks.forEach((task, idx) => {
       const selectedFeatureObjs = (task.selectedFeatures || [])
         .map((fId) => features.find((f) => f.id === fId))
@@ -128,12 +124,19 @@ export default function App() {
     setDevTasks([...currentSprint.devTasks]);
     setFeatures(project.backlog);
 
-    // --- GAME ENDING LOGIC ---
-    // Check if no feature in sprint and backlog is empty
-    const backlogIsEmpty =
-      project.backlog.filter((task) => !task.isDone()).length === 0;
+    // Create and fill new sprint
+    const newSprint = project.newSprint();
+    newSprint.fillDevSprint();
+    setDevTasks([...newSprint.devTasks]);
+    setSprintDone(false);
 
-    if (!sprintHasFeature && backlogIsEmpty) {
+    // --- GAME ENDING LOGIC ---
+    const noFeatureInBacklog =
+      project.backlog.filter((task) => task.getType() === "Feature" && !task.isDone()).length === 0;
+    const emptySprint = currentSprint.devTasks.length === 0;
+    const emptyNewSprint = newSprint.devTasks.length === 0;
+
+    if (noFeatureInBacklog && emptySprint && emptyNewSprint) {
       // Evaluate defects
       const notDoneDefects = project.defects.filter((d) => !d.isDone());
       const percentNotDone =
@@ -145,7 +148,11 @@ export default function App() {
         setGameResult(
           `You lost! ${percentNotDone}% of defects were not found.`
         );
-        console.log(notDoneDefects);
+        
+        notDoneDefects.forEach((defect) => {
+          console.log(`${defect.affectedTask.name}: ${defect.defectType} ${defect.stealth.toFixed(2)}`);
+        });
+
       } else {
         setGameResult(`You won! ${percentNotDone}% of defects were not found.`);
       }
@@ -153,12 +160,6 @@ export default function App() {
       return; // Do not create new sprint
     }
     // --- END GAME ENDING LOGIC ---
-
-    // Create and fill new sprint
-    const newSprint = project.newSprint();
-    newSprint.fillDevSprint();
-    setDevTasks([...newSprint.devTasks]);
-    setSprintDone(false);
   };
 
   const handleModalConfirm = () => {

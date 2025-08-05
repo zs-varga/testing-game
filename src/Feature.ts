@@ -70,19 +70,21 @@ export class Feature extends Task implements IFeature {
     super.done();
 
     // Generate defects for the feature based on its size and complexity
-    // large and complex features have more defects
+    // large task means lots of changes -> more defects
     this.project.game.generateDefects(
       this.project,
       this,
-      this.size + this.complexity
+      this.size
     );
 
-    // Generate regression defects
-    // to other features
-    this.project.game.generateRegressionDefects(
-      this.project,
-      this,
-      this.complexity
-    );
+    // Potentially generate regression defects
+    // complex features may have unexpected side effects
+    if (Math.random() < this.project.regressionRisk) {
+      this.project.game.generateRegressionDefects(
+        this.project,
+        this,
+        this.complexity
+      );
+    }
   }
 }
