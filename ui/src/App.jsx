@@ -364,23 +364,6 @@ function Board({
         )}
       />
       <Column
-        title="Test Tasks"
-        effort={`${testTasksSumEffort} / ${testEffort}`}
-        headerButton={<button onClick={handleAddTestTask}>Add</button>}
-        cards={testTasks.map((task, idx) => (
-          <TestTaskCard
-            key={idx}
-            task={task}
-            onChange={(newTask) => handleTestTaskChange(idx, newTask)}
-            features={features}
-            idx={idx}
-            testEffort={testEffort}
-            onDelete={() => handleDeleteTestTask(idx)}
-          />
-        ))}
-        error={isTestEffortExceeded}
-      />
-      <Column
         title="Done"
         cards={doneCards
           .filter(
@@ -411,6 +394,23 @@ function Board({
               />
             )
           )}
+      />
+      <Column
+        title="Test Tasks"
+        effort={`${testTasksSumEffort} / ${testEffort}`}
+        headerButton={<button onClick={handleAddTestTask}>Add</button>}
+        cards={testTasks.map((task, idx) => (
+          <TestTaskCard
+            key={idx}
+            task={task}
+            onChange={(newTask) => handleTestTaskChange(idx, newTask)}
+            features={features}
+            idx={idx}
+            testEffort={testEffort}
+            onDelete={() => handleDeleteTestTask(idx)}
+          />
+        ))}
+        error={isTestEffortExceeded}
       />
     </div>
   );

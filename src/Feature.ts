@@ -83,7 +83,7 @@ export class Feature extends Task implements IFeature {
       this.project.game.generateRegressionDefects(
         this.project,
         this,
-        this.complexity
+        this.size
       );
     }
   }

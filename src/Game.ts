@@ -109,7 +109,12 @@ export class Game implements IGame {
       );
 
       // Set risks so each type gets a unique value from [0.6, 0.25, 0.15, 0] randomly
-      const riskTypes = ["functionality", "performance", "usability", "security"] as const;
+      const riskTypes = [
+        "functionality",
+        "performance",
+        "usability",
+        "security",
+      ] as const;
       const riskValues = [0.6, 0.25, 0.15, 0];
       // Shuffle riskValues using Fisher-Yates shuffle
       for (let i = riskValues.length - 1; i > 0; i--) {
@@ -207,21 +212,31 @@ export class Game implements IGame {
           break;
         }
       }
+      // Size is based on complexity
+      // a complex feature have defects that need more effort to fix
+      const size = Math.floor(Math.random() * task.complexity) + 1;
 
-      const randomSeverity = Math.floor(Math.random() * 3) + 1; // 1-3
-      const randomStealth = Math.random() * project.maxStealth; // 0-maxStealth
+      // Defect complexity is a random value between 1 and task.complexity
+      const complexity = Math.floor(Math.random() * task.complexity) + 1;
+
+      const severity = Math.floor(Math.random() * 3) + 1; // 1-3
+
+      // Stealth depends on complexity: higher complexity means higher stealth, low complexity means easier to find
+      // Scale stealth linearly with complexity (0 for min, up to maxStealth for max)
+      const complexityFactor = task.complexity / project.maxFeatureComplexity;
+      const stealth = Math.random() * project.maxStealth * complexityFactor; // range: 0 to 1x of maxStealth
 
       const newDefect = new Defect(
         project.getNextId(),
         DEFECT_NAMES[type][(i - 1) % DEFECT_NAMES[type].length],
         project,
-        Math.floor(Math.random() * task.size) + 1, // size
-        Math.floor(Math.random() * task.complexity) + 1, // complexity
+        size,
+        complexity, // complexity
         task, // causeTask
         task, // affectedTask (for normal defects, the affected is the same as the cause)
-        randomSeverity, // severity
+        severity, // severity
         type, // type
-        randomStealth // stealth
+        stealth // stealth
       );
 
       // Link the defect to the task
