@@ -32,7 +32,7 @@
   font-size: 0.8rem;
   color: #666;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -40,8 +40,7 @@
 .task-card .task-detail {
   background: #f8f9fa;
   padding: 0.25rem 0.5rem;
-  border-radius: 10px;
-  margin-right: 0.25rem;
+  border-radius: 5px;
 }
 
 .task-card .task-type {

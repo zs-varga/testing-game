@@ -10,9 +10,15 @@ const DefectCard = ({ name, size, complexity, severity, affectedTask }) => {
         <span className="task-type defect">Defect</span>
       </div>
       <div className="task-details">
-        <span className="task-detail">Size: {size}</span>
+        <span title="Size" className="task-detail">📦 {size}</span>
+        {typeof complexity !== 'undefined' && (
+          <span title="Complexity" className="task-detail">🧩 {complexity}</span>
+        )}
+        {typeof severity !== 'undefined' && (
+          <span title="Severity" className="task-detail">🔥 {severity}</span>
+        )}
         {affectedTask && (
-          <span className="task-detail">Affects: {affectedTask.name}</span>
+          <span title="Affects" className="task-detail">🎯 {affectedTask.name}</span>
         )}
       </div>
     </div>

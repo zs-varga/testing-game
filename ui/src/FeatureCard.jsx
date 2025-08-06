@@ -22,15 +22,20 @@ const FeatureCard = ({
         <span className="task-type feature">Feature</span>
       </div>
       <div className="task-details">
-        {knowledge > 0 && <span className="task-detail">Size: {size}</span>}
-        {knowledge > 0.3 && <span className="task-detail">Complexity: {complexity}</span>}
-        {knowledge > 0.5 && <span className="task-detail">Found defects: {foundDefects}</span>}
-        {riskKnowledge > 0 && riskKnowledge < 0.8 && riskEntries.length > 0 && (
-          <span className="task-detail">Risk: {riskEntries[0][0]}</span>
+        {knowledge > 0 && (
+          <span title="Size" className="task-detail">📦 {size}</span>
         )}
-        {riskKnowledge > 0.8 && riskEntries.length > 0 && (
-          <span className="task-detail">
-            Risk(s): {riskEntries.map(([k, v]) => `${k}`).join(" > ")}
+        {knowledge > 0.3 && (
+          <span title="Complexity" className="task-detail">🧩 {complexity}</span>
+        )}
+        {knowledge > 0.5 && (
+          <span title="Found Defects" className="task-detail">🐞 {foundDefects}</span>
+        )}
+        {riskKnowledge > 0 && riskEntries.length > 0 && (
+          <span title="Risk" className="task-detail">
+            ⚠️ {riskKnowledge > 0.8
+              ? riskEntries.map(([k, v]) => `${k}`).join(" > ")
+              : riskEntries[0][0]}              
           </span>
         )}
       </div>
