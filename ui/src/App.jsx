@@ -315,25 +315,9 @@ function Board({
         title="Backlog"
         cards={backlogCards.map((f) =>
           f.getType && f.getType() === "Defect" ? (
-            <DefectCard
-              key={f.id}
-              name={f.name}
-              size={f.size}
-              complexity={f.complexity}
-              severity={f.severity}
-              affectedTask={f.affectedTask}
-            />
+            <DefectCard task={f} />
           ) : (
-            <FeatureCard
-              key={f.id}
-              name={f.name}
-              size={f.size}
-              complexity={f.complexity}
-              knowledge={f.knowledge}
-              riskKnowledge={f.riskKnowledge}
-              risks={f.risks ? f.risks : []}
-              foundDefects={f.getFoundDefects().length}
-            />
+            <FeatureCard task={f} />
           )
         )}
       />
@@ -341,25 +325,9 @@ function Board({
         title="Current Sprint"
         cards={devTasks.map((t) =>
           t.getType && t.getType() === "Defect" ? (
-            <DefectCard
-              key={t.id}
-              name={t.name}
-              size={t.size}
-              complexity={t.complexity}
-              severity={t.severity}
-              affectedTask={t.affectedTask}
-            />
+            <DefectCard task={t} />
           ) : (
-            <FeatureCard
-              key={t.id}
-              name={t.name}
-              size={t.size}
-              complexity={t.complexity}
-              knowledge={t.knowledge}
-              riskKnowledge={t.riskKnowledge}
-              risks={t.risks ? t.risks : []}
-              foundDefects={t.getFoundDefects().length}
-            />
+            <FeatureCard task={t} />
           )
         )}
       />
@@ -373,25 +341,9 @@ function Board({
           )
           .map((item) =>
             item.getType && item.getType() === "Defect" ? (
-              <DefectCard
-                key={item.id}
-                name={item.name}
-                size={item.size}
-                complexity={item.complexity}
-                severity={item.severity}
-                affectedTask={item.affectedTask}
-              />
+              <DefectCard task={item} />
             ) : (
-              <FeatureCard
-                key={item.id}
-                name={item.name}
-                size={item.size}
-                complexity={item.complexity}
-                knowledge={item.knowledge}
-                riskKnowledge={item.riskKnowledge}
-                risks={item.risks ? item.risks : []}
-                foundDefects={item.getFoundDefects().length}
-              />
+              <FeatureCard task={item} />
             )
           )}
       />
