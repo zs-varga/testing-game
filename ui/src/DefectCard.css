@@ -1,3 +1,23 @@
+/* Show tooltip with title and content on hover */
+.task-detail {
+  position: relative;
+  cursor: pointer;
+}
+.task-detail:hover::after {
+  content: attr(title) ": " attr(data-content);
+  position: absolute;
+  left: 50%;
+  top: 120%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 0.3em 0.7em;
+  border-radius: 0.3em;
+  font-size: 0.95em;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
 .task-type.defect {
   background: #f8d7da;
   color: #721c24;
