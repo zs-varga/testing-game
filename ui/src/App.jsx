@@ -4,13 +4,6 @@ import FeatureCard from "./FeatureCard";
 import DefectCard from "./DefectCard";
 import TestTaskCard from "./TestTaskCard";
 import { startGame } from "./game-engine";
-import { ExploratoryTestTask } from "../../src/TestTask/ExploratoryTestTask";
-import { GatherKnowledgeTask } from "../../src/TestTask/GatherKnowledgeTask";
-import { RiskAssessmentTask } from "../../src/TestTask/RiskAssessmentTask";
-import { PerformanceTestTask } from "../../src/TestTask/PerformanceTestTask";
-import { SecurityTestTask } from "../../src/TestTask/SecurityTestTask";
-import { UsabilityTestTask } from "../../src/TestTask/UsabilityTestTask";
-import { FunctionalTestTask } from "../../src/TestTask/FunctionalTestTask";
 
 
 export default function App() {
@@ -56,66 +49,30 @@ export default function App() {
       const selectedFeatureObjs = (task.selectedFeatures || [])
         .map((fId) => features.find((f) => f.id === fId))
         .filter(Boolean);
-      let testTaskInstance;
-      if (task.action === "Exploratory Testing") {
-        testTaskInstance = new ExploratoryTestTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Risk Assessment") {
-        testTaskInstance = new RiskAssessmentTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Functional Testing") {
-        testTaskInstance = new FunctionalTestTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Performance Testing") {
-        testTaskInstance = new PerformanceTestTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Security Testing") {
-        testTaskInstance = new SecurityTestTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Usability Testing") {
-        testTaskInstance = new UsabilityTestTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else if (task.action === "Knowledge Gathering") {
-        testTaskInstance = new GatherKnowledgeTask(
-          project.getNextId(),
-          task.action,
-          project,
-          selectedFeatureObjs,
-          task.effort
-        );
-      } else {
+      
+      // Map UI action names to factory method types
+      const taskTypeMap = {
+        "Exploratory Testing": "exploratory",
+        "Risk Assessment": "risk-assessment", 
+        "Functional Testing": "functional",
+        "Performance Testing": "performance",
+        "Security Testing": "security",
+        "Usability Testing": "usability",
+        "Knowledge Gathering": "gather-knowledge"
+      };
+      
+      const taskType = taskTypeMap[task.action];
+      if (!taskType) {
         throw new Error(`Unknown task action: ${task.action}`);
       }
+      
+      const testTaskInstance = project.createTestTask(
+        taskType,
+        task.action,
+        selectedFeatureObjs,
+        task.effort
+      );
+      
       project.backlog.push(testTaskInstance);
       currentSprint.addTestTask(testTaskInstance);
     });

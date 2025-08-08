@@ -3,6 +3,13 @@ import { IDefect, Defect } from "./Defect.js";
 import { Game } from "./Game.js";
 import { Sprint } from "./Sprint.js";
 import { ITestTask } from "./TestTask/TestTask.js";
+import { ExploratoryTestTask } from "./TestTask/ExploratoryTestTask.js";
+import { GatherKnowledgeTask } from "./TestTask/GatherKnowledgeTask.js";
+import { RiskAssessmentTask } from "./TestTask/RiskAssessmentTask.js";
+import { PerformanceTestTask } from "./TestTask/PerformanceTestTask.js";
+import { SecurityTestTask } from "./TestTask/SecurityTestTask.js";
+import { UsabilityTestTask } from "./TestTask/UsabilityTestTask.js";
+import { FunctionalTestTask } from "./TestTask/FunctionalTestTask.js";
 
 export interface IProject {
   id: number;
@@ -348,5 +355,33 @@ export class Project implements IProject {
     return this._sprints.length > 0
       ? this._sprints[this._sprints.length - 1]
       : undefined;
+  }
+
+  createTestTask(
+    type: string,
+    name: string,
+    features: Feature[],
+    size: number = 0
+  ): ITestTask {
+    const id = this.getNextId();
+    
+    switch (type.toLowerCase()) {
+      case "exploratory":
+        return new ExploratoryTestTask(id, name, this, features, size);
+      case "gather-knowledge":
+        return new GatherKnowledgeTask(id, name, this, features, size);
+      case "risk-assessment":
+        return new RiskAssessmentTask(id, name, this, features, size);
+      case "performance":
+        return new PerformanceTestTask(id, name, this, features, size);
+      case "security":
+        return new SecurityTestTask(id, name, this, features, size);
+      case "usability":
+        return new UsabilityTestTask(id, name, this, features, size);
+      case "functional":
+        return new FunctionalTestTask(id, name, this, features, size);
+      default:
+        throw new Error(`Unknown test task type: ${type}`);
+    }
   }
 }
