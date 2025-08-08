@@ -350,19 +350,21 @@ function Board({
       <Column
         title="Test Tasks"
         effort={`${testTasksSumEffort} / ${testEffort}`}
-        headerButton={<button onClick={handleAddTestTask}>Add</button>}
-        cards={testTasks.map((task, idx) => (
-          <TestTaskCard
-            key={idx}
-            task={task}
-            onChange={(newTask) => handleTestTaskChange(idx, newTask)}
-            features={features}
-            idx={idx}
-            testEffort={testEffort}
-            onDelete={() => handleDeleteTestTask(idx)}
-          />
-        ))}
         error={isTestEffortExceeded}
+        cards={[
+          ...testTasks.map((task, idx) => (
+            <TestTaskCard
+              key={idx}
+              task={task}
+              onChange={(newTask) => handleTestTaskChange(idx, newTask)}
+              features={features}
+              idx={idx}
+              testEffort={testEffort}
+              onDelete={() => handleDeleteTestTask(idx)}
+            />
+          )),
+          <button key="add-btn" className="btn btn-secondary" onClick={handleAddTestTask}>Add test task</button>
+        ]}
       />
     </div>
   );
@@ -383,7 +385,6 @@ function Column({
       <div className="column-header sticky-column-header">
         <h3>{title}</h3>
         {showEffort && <span className="effort-sum">{effort} effort</span>}
-        {headerButton && <span className="header-btn">{headerButton}</span>}
       </div>
       {error && (
         <div

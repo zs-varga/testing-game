@@ -348,9 +348,9 @@ export class Game implements IGame {
     project.testEffort = 5;
     project.regressionRisk = 0.1;
     project.minFeatureSize = 3;
-    project.maxFeatureSize = 6;
+    project.maxFeatureSize = 5;
     project.minFeatureComplexity = 3;
-    project.maxFeatureComplexity = 6;
+    project.maxFeatureComplexity = 5;
     project.featureCount = 5;
     project.maxStealth = 0.8;
 
