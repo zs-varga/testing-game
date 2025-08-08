@@ -46,7 +46,7 @@ describe('Project Class', () => {
 
     test('should consider both backlog and defects for max ID', () => {
       const feature = new Feature(3, 'Feature', project);
-      const defect = new Defect(7, 'Defect', project, 1, 1, feature, 1, 'functionality', 0);
+      const defect = new Defect(7, 'Defect', project, 1, 1, feature, feature, 1, 'functionality', 0);
       
       project.addToBacklog(feature);
       project.addDefect(defect);
@@ -101,7 +101,7 @@ describe('Project Class', () => {
   describe('Defect Management', () => {
     test('should add defects', () => {
       const feature = new Feature(1, 'Test Feature', project);
-      const defect = new Defect(2, 'Test Defect', project, 1, 1, feature, 1, 'functionality', 0.5);
+      const defect = new Defect(2, 'Test Defect', project, 1, 1, feature, feature, 1, 'functionality', 0.5);
       
       project.addDefect(defect);
       
@@ -111,8 +111,8 @@ describe('Project Class', () => {
 
     test('should remove defects', () => {
       const feature = new Feature(1, 'Test Feature', project);
-      const defect1 = new Defect(2, 'Defect 1', project, 1, 1, feature, 1, 'functionality', 0.5);
-      const defect2 = new Defect(3, 'Defect 2', project, 1, 1, feature, 1, 'usability', 0.5);
+      const defect1 = new Defect(2, 'Defect 1', project, 1, 1, feature, feature, 1, 'functionality', 0.5);
+      const defect2 = new Defect(3, 'Defect 2', project, 1, 1, feature, feature, 1, 'usability', 0.5);
       
       project.addDefect(defect1);
       project.addDefect(defect2);

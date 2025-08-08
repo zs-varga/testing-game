@@ -77,13 +77,12 @@ describe('Feature Class', () => {
 
   describe('Defect Retrieval', () => {
     test('should get defects caused by this feature', () => {
-      const defect1 = new Defect(2, 'Defect 1', project, 1, 1, feature, 1, 'functionality', 0.5);
-      const defect2 = new Defect(3, 'Defect 2', project, 1, 1, feature, 2, 'usability', 0.3);
-      const unrelatedDefect = new Defect(4, 'Unrelated', project, 1, 1, feature, 1, 'security', 0.1);
+      const defect1 = new Defect(2, 'Defect 1', project, 1, 1, feature, feature, 1, 'functionality', 0.5);
+      const defect2 = new Defect(3, 'Defect 2', project, 1, 1, feature, feature, 2, 'usability', 0.3);
       
-      // Set different cause task for unrelated defect
+      // Create an unrelated defect that affects a different feature
       const otherFeature = new Feature(5, 'Other Feature', project);
-      unrelatedDefect.causeTask = otherFeature;
+      const unrelatedDefect = new Defect(4, 'Unrelated', project, 1, 1, otherFeature, otherFeature, 1, 'security', 0.1);
       
       project.addDefect(defect1);
       project.addDefect(defect2);

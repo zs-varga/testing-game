@@ -384,4 +384,47 @@ export class Project implements IProject {
         throw new Error(`Unknown test task type: ${type}`);
     }
   }
+
+  evaluateGameEnd(currentSprint: Sprint, newSprint: Sprint): { 
+    isGameOver: boolean; 
+    result?: string; 
+    isWon?: boolean;
+    percentNotDone?: number;
+  } {
+    // Check if game should end
+    const noFeatureInBacklog = this.backlog.filter(
+      (task) => task.getType() === "Feature" && !task.isDone()
+    ).length === 0;
+    const emptySprint = currentSprint.devTasks.length === 0;
+    const emptyNewSprint = newSprint.devTasks.length === 0;
+
+    if (noFeatureInBacklog && emptySprint && emptyNewSprint) {
+      // Evaluate defects
+      const notDoneDefects = this.defects.filter((d) => !d.isDone());
+      const percentNotDone = this.defects.length === 0
+        ? 0
+        : Math.round((notDoneDefects.length / this.defects.length) * 100);
+
+      const isWon = percentNotDone <= 10;
+      const result = isWon
+        ? `You won! ${percentNotDone}% of defects were not found.`
+        : `You lost! ${percentNotDone}% of defects were not found.`;
+
+      // Log unfound defects for debugging
+      if (!isWon) {
+        notDoneDefects.forEach((defect) => {
+          console.log(`${defect.affectedTask.name}: ${defect.defectType} ${defect.stealth.toFixed(2)}`);
+        });
+      }
+
+      return {
+        isGameOver: true,
+        result,
+        isWon,
+        percentNotDone
+      };
+    }
+
+    return { isGameOver: false };
+  }
 }

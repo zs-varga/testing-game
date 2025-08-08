@@ -19,8 +19,9 @@ describe('Defect Class', () => {
       project,
       1,
       2,
-      feature,
-      3,
+      feature,  // causeTask
+      feature,  // affectedTask  
+      3,        // severity
       'functionality',
       0.5
     );
@@ -43,7 +44,7 @@ describe('Defect Class', () => {
     });
 
     test('should create defect with default values', () => {
-      const simpleDefect = new Defect(3, 'Simple Defect', project, 1, 1, feature);
+      const simpleDefect = new Defect(3, 'Simple Defect', project, 1, 1, feature, feature);
       
       expect(simpleDefect.id).toBe(3);
       expect(simpleDefect.name).toBe('Simple Defect');
@@ -68,7 +69,7 @@ describe('Defect Class', () => {
       const types: DefectType[] = ['functionality', 'usability', 'performance', 'security'];
       
       types.forEach(type => {
-        const testDefect = new Defect(10, 'Test', project, 1, 1, feature, 1, type, 0);
+        const testDefect = new Defect(10, 'Test', project, 1, 1, feature, feature, 1, type, 0);
         expect(testDefect.defectType).toBe(type);
       });
     });

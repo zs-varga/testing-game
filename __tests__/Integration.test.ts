@@ -134,9 +134,9 @@ describe('Integration Tests - Sprint with Dev and Test Tasks', () => {
       sprint.done();
       
       // Create defects found during testing
-      const securityDefect = new Defect(project.getNextId(), 'Security Vulnerability', project, 5, 2, feature, 3, 'security', 0.7);
+      const securityDefect = new Defect(project.getNextId(), 'Security Vulnerability', project, 5, 2, feature, feature, 3, 'security', 0.7);
       project.addToBacklog(securityDefect);
-      const usabilityDefect = new Defect(project.getNextId(), 'Usability Issue', project, 3, 1, feature, 2, 'usability', 0.3);
+      const usabilityDefect = new Defect(project.getNextId(), 'Usability Issue', project, 3, 1, feature, feature, 2, 'usability', 0.3);
       project.addToBacklog(usabilityDefect);
       
       project.defectFound(securityDefect);

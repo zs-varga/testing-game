@@ -43,6 +43,11 @@ export default function App() {
 
   const executeSprint = () => {
     const currentSprint = project && project.getCurrentSprint();
+    if (!currentSprint) {
+      console.error('No current sprint found');
+      return;
+    }
+    
     setSprintDone(true);
 
     testTasks.forEach((task, idx) => {
@@ -66,15 +71,20 @@ export default function App() {
         throw new Error(`Unknown task action: ${task.action}`);
       }
       
-      const testTaskInstance = project.createTestTask(
-        taskType,
-        task.action,
-        selectedFeatureObjs,
-        task.effort
-      );
-      
-      project.backlog.push(testTaskInstance);
-      currentSprint.addTestTask(testTaskInstance);
+      try {
+        const testTaskInstance = project.createTestTask(
+          taskType,
+          task.action,
+          selectedFeatureObjs,
+          task.effort
+        );
+        
+        project.backlog.push(testTaskInstance);
+        currentSprint.addTestTask(testTaskInstance);
+      } catch (error) {
+        console.error(`Failed to create test task: ${error.message}`);
+        throw error;
+      }
     });
 
     currentSprint.done();
@@ -84,39 +94,24 @@ export default function App() {
     // Create and fill new sprint
     const newSprint = project.newSprint();
     newSprint.fillDevSprint();
+
+    // Check for game end using backend logic
+    try {
+      const gameEvaluation = project.evaluateGameEnd(currentSprint, newSprint);
+      
+      if (gameEvaluation.isGameOver) {
+        setGameResult(gameEvaluation.result);
+        setShowGameEndModal(true);
+        return; // Do not update UI with new sprint if game is over
+      }
+    } catch (error) {
+      console.error(`Failed to evaluate game end: ${error.message}`);
+      // Continue with normal game flow if evaluation fails
+    }
+
+    // Only update UI with new sprint if game continues
     setDevTasks([...newSprint.devTasks]);
     setSprintDone(false);
-
-    // --- GAME ENDING LOGIC ---
-    const noFeatureInBacklog =
-      project.backlog.filter((task) => task.getType() === "Feature" && !task.isDone()).length === 0;
-    const emptySprint = currentSprint.devTasks.length === 0;
-    const emptyNewSprint = newSprint.devTasks.length === 0;
-
-    if (noFeatureInBacklog && emptySprint && emptyNewSprint) {
-      // Evaluate defects
-      const notDoneDefects = project.defects.filter((d) => !d.isDone());
-      const percentNotDone =
-        project.defects.length === 0
-          ? 0
-          : Math.round((notDoneDefects.length / project.defects.length) * 100);
-
-      if (percentNotDone > 10) {
-        setGameResult(
-          `You lost! ${percentNotDone}% of defects were not found.`
-        );
-        
-        notDoneDefects.forEach((defect) => {
-          console.log(`${defect.affectedTask.name}: ${defect.defectType} ${defect.stealth.toFixed(2)}`);
-        });
-
-      } else {
-        setGameResult(`You won! ${percentNotDone}% of defects were not found.`);
-      }
-      setShowGameEndModal(true);
-      return; // Do not create new sprint
-    }
-    // --- END GAME ENDING LOGIC ---
   };
 
   const handleModalConfirm = () => {
