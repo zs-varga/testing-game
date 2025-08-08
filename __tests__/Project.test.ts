@@ -217,4 +217,96 @@ describe('Project Class', () => {
       expect(project.sprints).toEqual([sprint1, sprint2]);
     });
   });
+
+  describe('Test Task Factory', () => {
+    test('should create exploratory test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('exploratory', 'Exploratory Test', [feature], 3);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Exploratory Test');
+      expect(testTask.size).toBe(3);
+      expect(testTask.getType()).toBe('ExploratoryTestTask');
+    });
+
+    test('should create gather knowledge test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('gather-knowledge', 'Knowledge Gathering', [feature], 4);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Knowledge Gathering');
+      expect(testTask.size).toBe(4);
+      expect(testTask.getType()).toBe('GatherKnowledgeTask');
+    });
+
+    test('should create functional test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('functional', 'Functional Test', [feature], 2);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Functional Test');
+      expect(testTask.size).toBe(2);
+      expect(testTask.getType()).toBe('FunctionalTestTask');
+    });
+
+    test('should create performance test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('performance', 'Performance Test', [feature], 3);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Performance Test');
+      expect(testTask.size).toBe(3);
+      expect(testTask.getType()).toBe('PerformanceTestTask');
+    });
+
+    test('should create security test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('security', 'Security Test', [feature], 3);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Security Test');
+      expect(testTask.size).toBe(3);
+      expect(testTask.getType()).toBe('SecurityTestTask');
+    });
+
+    test('should create usability test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('usability', 'Usability Test', [feature], 2);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Usability Test');
+      expect(testTask.size).toBe(2);
+      expect(testTask.getType()).toBe('UsabilityTestTask');
+    });
+
+    test('should create risk assessment test task', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      const testTask = project.createTestTask('risk-assessment', 'Risk Assessment', [feature], 3);
+      
+      expect(testTask).toBeDefined();
+      expect(testTask.name).toBe('Risk Assessment');
+      expect(testTask.size).toBe(3);
+      expect(testTask.getType()).toBe('RiskAssessmentTask');
+    });
+
+    test('should throw error for invalid test task type', () => {
+      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
+      
+      expect(() => {
+        project.createTestTask('invalid-type', 'Invalid Test', [feature], 3);
+      }).toThrow('Unknown test task type: invalid-type');
+    });
+  });
+
+  describe('Game End Evaluation', () => {
+    test('should evaluate game end conditions', () => {
+      const sprint1 = project.newSprint();
+      const sprint2 = project.newSprint();
+      
+      const gameEndResult = project.evaluateGameEnd(sprint1, sprint2);
+      expect(gameEndResult).toHaveProperty('isGameOver');
+      expect(gameEndResult).toHaveProperty('result');
+      expect(gameEndResult).toHaveProperty('isWon');
+    });
+  });
 });
