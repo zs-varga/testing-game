@@ -59,7 +59,7 @@ export default function App() {
       const taskTypeMap = {
         "Exploratory Testing": "exploratory",
         "Risk Assessment": "risk-assessment", 
-        "Functional Testing": "functional",
+        "Functional Testing": "functionality",
         "Performance Testing": "performance",
         "Security Testing": "security",
         "Usability Testing": "usability",

@@ -378,7 +378,7 @@ export class Project implements IProject {
         return new SecurityTestTask(id, name, this, features, size);
       case "usability":
         return new UsabilityTestTask(id, name, this, features, size);
-      case "functional":
+      case "functionality":
         return new FunctionalTestTask(id, name, this, features, size);
       default:
         throw new Error(`Unknown test task type: ${type}`);
@@ -413,7 +413,7 @@ export class Project implements IProject {
       // Log unfound defects for debugging
       if (!isWon) {
         notDoneDefects.forEach((defect) => {
-          console.log(`${defect.affectedTask.name}: ${defect.defectType} ${defect.stealth.toFixed(2)}`);
+          // console.log(`${defect.affectedTask.name}: ${defect.defectType} ${defect.stealth.toFixed(2)}`);
         });
       }
 

@@ -2,7 +2,7 @@
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 0.75rem;
+  padding: 12px 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s, border-color 0.2s;
 }
@@ -40,13 +40,13 @@
 .task-card .task-detail {
   background: #f8f9fa;
   padding: 0.25rem 0.5rem;
-  border-radius: 5px;
+  border-radius: 6px;
 }
 
 .task-card .task-type {
   font-size: 0.5rem;
   padding: 0.2rem 0.7rem;
-  border-radius: 16px;
+  border-radius: 6px;
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.05em;

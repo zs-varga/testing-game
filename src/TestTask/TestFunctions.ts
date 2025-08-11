@@ -62,7 +62,7 @@ export class TestFunctions {
         project.defectFound(defect);
         return;
       }
-      console.log(`${defect.defectType} vs ${type} testing: ${baseChance.toFixed(2)} * ${effortFactor.toFixed(2)} * ${typeFactor.toFixed(2)} * ${knowledgeFactor.toFixed(2)} = ${detectionScore.toFixed(2)} vs ${defect.stealth.toFixed(2)}`);
+      // console.log(`${defect.defectType} vs ${type} testing: ${baseChance.toFixed(2)} * ${effortFactor.toFixed(2)} * ${typeFactor.toFixed(2)} * ${knowledgeFactor.toFixed(2)} = ${detectionScore.toFixed(2)} vs ${defect.stealth.toFixed(2)}`);
     });
   }
 }
