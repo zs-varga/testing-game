@@ -3,6 +3,21 @@ import { IFeature, Feature } from "./Feature.js";
 import { IDefect, Defect, DefectType } from "./Defect.js";
 import { ITask } from "./Task.js";
 
+export interface IProjectConfig {
+  devEffort: number;
+  testEffort: number;
+  regressionRisk: number;
+  minFeatureSize: number;
+  maxFeatureSize: number;
+  minFeatureComplexity: number;
+  maxFeatureComplexity: number;
+  featureCount: number;
+  maxStealth: number;
+  testEffortCoefficient: number;
+  testTypeCoefficient: number;
+  testKnowledgeCoefficient: number;
+}
+
 export interface IGame {
   projects: Project[]; // Use Project class instead of IProject interface
 }
@@ -89,15 +104,16 @@ export class Game implements IGame {
       const featureName =
         i + 1 + ". " + FEATURE_NAMES[i % FEATURE_NAMES.length];
 
-      const size =
-        Math.floor(
-          Math.random() * (project.maxFeatureSize - project.minFeatureSize + 1)
-        ) + project.minFeatureSize;
-      const complexity =
-        Math.floor(
-          Math.random() *
-            (project.maxFeatureComplexity - project.minFeatureComplexity + 1)
-        ) + project.minFeatureComplexity;
+      const size = (() => {
+        const randomValue = Math.pow(Math.random(), 0.4); // Lower values create more variance (try 0.2-0.5)
+        return Math.floor(randomValue * (project.maxFeatureSize - project.minFeatureSize + 1)) + project.minFeatureSize;
+      })();
+
+      const complexity = (() => {
+        const randomValue = Math.pow(Math.random(), 0.4); // Lower values create more variance (try 0.2-0.5)
+        return Math.floor(randomValue * (project.maxFeatureComplexity - project.minFeatureComplexity + 1)) + project.minFeatureComplexity;
+      })();
+      
       const feature = new Feature(
         id,
         featureName,
@@ -108,14 +124,7 @@ export class Game implements IGame {
         "new"
       );
 
-      // Set risks so each type gets a unique value from [0.6, 0.25, 0.15, 0] randomly
-      const riskTypes = [
-        "functionality",
-        "performance",
-        "usability",
-        "security",
-      ] as const;
-      const riskValues = [0.6, 0.25, 0.15, 0];
+      const riskValues = [0.8, 0.15, 0.05, 0];
       // Shuffle riskValues using Fisher-Yates shuffle
       for (let i = riskValues.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -189,20 +198,21 @@ export class Game implements IGame {
         .map(({ name }) => name),
     };
 
-    // Determine defect count and create defects array before loop
-    const defectCount = Math.floor(Math.random() * maxDefects) + 1;
+    // Determine defect count (skewed toward maxDefects)
+    const power = 4; // Higher power means more skewed distribution towards maxDefects
+    const defectCount = Math.floor(Math.pow(Math.random(), 1/power) * maxDefects) + 1;
     const createdDefects: IDefect[] = [];
+    const defectTypes: DefectType[] = [
+      "functionality",
+      "usability",
+      "performance",
+      "security",
+    ];
+    const weights = defectTypes.map((type) => (task as Feature).risks[type]);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
     // Create defects
     for (let i = 1; i <= defectCount; i++) {
       // Weighted defect type selection based on risks
-      const defectTypes: DefectType[] = [
-        "functionality",
-        "usability",
-        "performance",
-        "security",
-      ];
-      const weights = defectTypes.map((type) => (task as Feature).risks[type]);
-      const totalWeight = weights.reduce((a, b) => a + b, 0);
       let cumulative = 0;
       let type = defectTypes[0];
       for (let j = 0; j < defectTypes.length; j++) {
@@ -224,7 +234,7 @@ export class Game implements IGame {
       // Stealth depends on complexity: higher complexity means higher stealth, low complexity means easier to find
       // Scale stealth linearly with complexity (0 for min, up to maxStealth for max)
       const complexityFactor = task.complexity / project.maxFeatureComplexity;
-      const stealth = Math.random() * project.maxStealth * complexityFactor; // range: 0 to 1x of maxStealth
+      const stealth = Math.random() * project.maxStealth * complexityFactor;
 
       const newDefect = new Defect(
         project.getNextId(),
@@ -255,11 +265,9 @@ export class Game implements IGame {
     task: ITask,
     maxDefects: number = 3
   ): Defect[] {
-    if (Math.random() < project.regressionRisk) {
-      return [];
-    }
-
-    const defectCount = Math.floor(Math.random() * maxDefects) + 1;
+    // Determine defect count (skewed toward maxDefects)
+    const power = 4; // Higher power means more skewed distribution towards maxDefects
+    const defectCount = Math.floor(Math.pow(Math.random(), 1/power) * maxDefects) + 1;
     const otherFeatures = project.backlog.filter(
       (item) =>
         item.id !== task.id && item.getType() === "Feature" && item.isDone()
@@ -273,11 +281,11 @@ export class Game implements IGame {
     const featureWeights = otherFeatures.map(
       (feature) => (feature as Feature).getDefects().length
     );
-    const totalWeight = featureWeights.reduce((a, b) => a + b, 0);
+    const totalFeatureWeight = featureWeights.reduce((a, b) => a + b, 0);
 
     // We are simulating defect clustering
     function weightedRandomFeature() {
-      let r = Math.random() * totalWeight;
+      let r = Math.random() * totalFeatureWeight;
       for (let i = 0; i < otherFeatures.length; i++) {
         if (r < featureWeights[i]) {
           return otherFeatures[i];
@@ -288,28 +296,26 @@ export class Game implements IGame {
       return otherFeatures[Math.floor(Math.random() * otherFeatures.length)];
     }
 
+    // Weighted defect type selection based on risks
+    const defectTypes: DefectType[] = [
+      "functionality",
+      "usability",
+      "performance",
+      "security",
+    ];
+    const typeWeights = defectTypes.map((type) => (task as Feature).risks[type]);
+    const totalTypeWeight = typeWeights.reduce((a, b) => a + b, 0);
     const newDefects: Defect[] = [];
     for (let i = 0; i < defectCount; i++) {
       const randomFeature = weightedRandomFeature();
       let type;
 
       if (task.getType() === "Feature") {
-        // Weighted defect type selection based on risks
-        const defectTypes: DefectType[] = [
-          "functionality",
-          "usability",
-          "performance",
-          "security",
-        ];
-        const weights = defectTypes.map(
-          (type) => (task as Feature).risks[type]
-        );
-        const totalWeight = weights.reduce((a, b) => a + b, 0);
         let cumulative = 0;
         let type = defectTypes[0];
         for (let j = 0; j < defectTypes.length; j++) {
-          cumulative += weights[j];
-          if (Math.random() * totalWeight < cumulative) {
+          cumulative += typeWeights[j];
+          if (Math.random() * totalTypeWeight < cumulative) {
             type = defectTypes[j];
             break;
           }
@@ -332,6 +338,10 @@ export class Game implements IGame {
         Math.random() * project.maxStealth // stealth
       );
 
+      // Link the defect to the task
+      regressionDefect.addLinkedTask(task);
+      task.addLinkedTask(regressionDefect);
+
       project.addDefect(regressionDefect);
       newDefects.push(regressionDefect);
     }
@@ -343,20 +353,20 @@ export class Game implements IGame {
     return newDefects;
   }
 
-  initializeProject(project: Project): void {
-    project.devEffort = 10;
-    project.testEffort = 5;
-    project.regressionRisk = 0.1;
-    project.minFeatureSize = 3;
-    project.maxFeatureSize = 5;
-    project.minFeatureComplexity = 3;
-    project.maxFeatureComplexity = 5;
-    project.featureCount = 5;
-    project.maxStealth = 0.8;
+  initializeProject(project: Project, config: IProjectConfig): void {
+    project.devEffort = config.devEffort;
+    project.testEffort = config.testEffort;
+    project.regressionRisk = config.regressionRisk;
+    project.minFeatureSize = config.minFeatureSize;
+    project.maxFeatureSize = config.maxFeatureSize;
+    project.minFeatureComplexity = config.minFeatureComplexity;
+    project.maxFeatureComplexity = config.maxFeatureComplexity;
+    project.featureCount = config.featureCount;
+    project.maxStealth = config.maxStealth;
 
-    project.testEffortCoefficient = 3;
-    project.testTypeCoefficient = 1.5;
-    project.testKnowledgeCoefficient = 1.5;
+    project.testEffortCoefficient = config.testEffortCoefficient;
+    project.testTypeCoefficient = config.testTypeCoefficient;
+    project.testKnowledgeCoefficient = config.testKnowledgeCoefficient;
 
     this.generateFeatures(project);
   }

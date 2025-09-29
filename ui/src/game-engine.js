@@ -1,11 +1,23 @@
 import { Game } from "../../src/Game.ts";
-import { Project } from "../../src/Project.ts";
-import { Feature } from "../../src/Feature.ts";
 
 export function startGame() {
   const game = new Game();
   const project = game.createProject(1, "Test Management Project");
-  game.initializeProject(project);
+
+  game.initializeProject(project, {
+    devEffort: 10,
+    testEffort: 5,
+    regressionRisk: 0.07,
+    minFeatureSize: 3,
+    maxFeatureSize: 7,
+    minFeatureComplexity: 3,
+    maxFeatureComplexity: 5,
+    featureCount: 5,
+    maxStealth: 0.84,
+    testEffortCoefficient: 0.29,
+    testTypeCoefficient: 0.41,
+    testKnowledgeCoefficient: 0.37,
+  });
   const sprint = startSprint(project);
   return { game, project, sprint };
 }

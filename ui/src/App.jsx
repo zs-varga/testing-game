@@ -5,6 +5,132 @@ import DefectCard from "./DefectCard";
 import TestTaskCard from "./TestTaskCard";
 import { startGame } from "./game-engine";
 
+// Debug function to log unfound bugs statistics
+function logBugs(project) {
+  if (!project || !project.defects) return;
+  
+  const bugs = project.defects;
+  
+  if (bugs.length === 0) {
+    return;
+  }
+  
+  // Sort bugs by feature, then type, then stealth
+  const sortedBugs = bugs.sort((a, b) => {
+    const featureA = a.affectedTask ? `${a.affectedTask.id}_${a.affectedTask.name}` : "zzz_unknown";
+    const featureB = b.affectedTask ? `${b.affectedTask.id}_${b.affectedTask.name}` : "zzz_unknown";
+    
+    if (featureA !== featureB) return featureA.localeCompare(featureB);
+    
+    const typeA = a.defectType || "unknown";
+    const typeB = b.defectType || "unknown";
+    if (typeA !== typeB) return typeA.localeCompare(typeB);
+    
+    return a.stealth - b.stealth;
+  });
+  
+  // Group bugs by feature and type
+  const bugsByFeature = {};
+  
+  sortedBugs.forEach(bug => {
+    const feature = bug.affectedTask;
+    const featureName = feature ? feature.name : "Unknown";
+    const bugType = bug.defectType || "unknown";
+    
+    if (!bugsByFeature[featureName]) {
+      bugsByFeature[featureName] = {
+        "Feature Name": featureName,
+        "Risk": "None",
+        "Size": feature ? feature.size : 0,
+        "Bug Count": 0,
+        "Found Count": 0,
+        "Functionality": 0,
+        "Functionality Found": 0,
+        "Performance": 0,
+        "Performance Found": 0,
+        "Usability": 0,
+        "Usability Found": 0,
+        "Security": 0,
+        "Security Found": 0
+      };
+      
+      // Update size and risk once when creating the feature entry
+      if (feature && feature.risks) {
+        const risks = feature.risks;
+        const maxRiskValue = Math.max(
+          risks.functionality || 0,
+          risks.performance || 0,
+          risks.usability || 0,
+          risks.security || 0
+        );
+        
+        if (maxRiskValue > 0) {
+          let riskName = "None";
+          if (risks.functionality === maxRiskValue) riskName = "Functionality";
+          else if (risks.performance === maxRiskValue) riskName = "Performance";
+          else if (risks.usability === maxRiskValue) riskName = "Usability";
+          else if (risks.security === maxRiskValue) riskName = "Security";
+          
+          bugsByFeature[featureName]["Risk"] = riskName;
+        }
+      }
+    }
+    
+    // Increment bug count for this feature
+    bugsByFeature[featureName]["Bug Count"]++;
+    
+    // Track found bugs
+    if (bug.isFound) {
+      bugsByFeature[featureName]["Found Count"]++;
+    }
+    
+    // Map bug types to column names
+    if (bugType === "functionality") {
+      bugsByFeature[featureName]["Functionality"]++;
+      if (bug.isFound) {
+        bugsByFeature[featureName]["Functionality Found"]++;
+      }
+    } else if (bugType === "performance") {
+      bugsByFeature[featureName]["Performance"]++;
+      if (bug.isFound) {
+        bugsByFeature[featureName]["Performance Found"]++;
+      }
+    } else if (bugType === "usability") {
+      bugsByFeature[featureName]["Usability"]++;
+      if (bug.isFound) {
+        bugsByFeature[featureName]["Usability Found"]++;
+      }
+    } else if (bugType === "security") {
+      bugsByFeature[featureName]["Security"]++;
+      if (bug.isFound) {
+        bugsByFeature[featureName]["Security Found"]++;
+      }
+    }
+  });
+  
+  const tableData = Object.values(bugsByFeature).map(feature => {
+    const totalBugs = feature["Bug Count"];
+    const foundBugs = feature["Found Count"] || 0;
+    const updatedFeature = { ...feature };
+    updatedFeature["Bug Count"] = `${totalBugs} (${foundBugs})`;
+    updatedFeature["Functionality"] = `${feature["Functionality"]} (${feature["Functionality Found"]})`;
+    updatedFeature["Performance"] = `${feature["Performance"]} (${feature["Performance Found"]})`;
+    updatedFeature["Usability"] = `${feature["Usability"]} (${feature["Usability Found"]})`;
+    updatedFeature["Security"] = `${feature["Security"]} (${feature["Security Found"]})`;
+    
+    // Remove the helper fields from display
+    delete updatedFeature["Found Count"];
+    delete updatedFeature["Functionality Found"];
+    delete updatedFeature["Performance Found"];
+    delete updatedFeature["Usability Found"];
+    delete updatedFeature["Security Found"];
+    
+    return updatedFeature;
+  });
+  
+  console.table(tableData);
+}
+
 
 export default function App() {
   const [project, setProject] = useState(null);
@@ -90,6 +216,8 @@ export default function App() {
     currentSprint.done();
     setDevTasks([...currentSprint.devTasks]);
     setFeatures(project.backlog);
+
+    logBugs(project);
 
     // Create and fill new sprint
     const newSprint = project.newSprint();

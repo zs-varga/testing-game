@@ -50,19 +50,37 @@ export class TestFunctions {
       .getDefects()
       .filter((defect) => !defect.isFound);
 
-    unknownDefects.forEach((defect) => {
+    if (unknownDefects.length === 0) {
+      return;
+    }
+    
+    let foundDefectNumber = 0;
+    const maxDefectsToFind = Math.round(effort / feature.size) * feature.size;
+
+    //console.log(`${maxDefectsToFind} vs ${unknownDefects.length}`);
+    for (const defect of unknownDefects) {
+      /*
       const baseChance = Math.max(Math.random(), 0.75);
       const effortFactor = project.testEffortCoefficient * effort / feature.size; // higher effort means higher chance to find defects
       const typeFactor = defect.defectType === type ? project.testTypeCoefficient : 0.1; // very low chance for the wrong type
-      const knowledgeFactor = project.testKnowledgeCoefficient * feature.knowledge; // higher knowledge means higher chance to find defects
+      const knowledgeFactor = Math.max(project.testKnowledgeCoefficient * feature.knowledge, 0.05); // higher knowledge means higher chance to find defects
+      const detectionScore = baseChance * effortFactor * typeFactor * knowledgeFactor;
+      */
+
       const detectionScore =
-        baseChance * effortFactor * typeFactor * knowledgeFactor;
-      
+        0.1 +
+        (project.testEffortCoefficient * effort) / feature.size +
+        (defect.defectType === type ? project.testTypeCoefficient : 0) +
+        project.testKnowledgeCoefficient * feature.knowledge;
+
       if (detectionScore >= defect.stealth) {
         project.defectFound(defect);
-        return;
+        foundDefectNumber++;
+      }
+      if (foundDefectNumber >= maxDefectsToFind) {
+        break;
       }
       // console.log(`${defect.defectType} vs ${type} testing: ${baseChance.toFixed(2)} * ${effortFactor.toFixed(2)} * ${typeFactor.toFixed(2)} * ${knowledgeFactor.toFixed(2)} = ${detectionScore.toFixed(2)} vs ${defect.stealth.toFixed(2)}`);
-    });
+    }
   }
 }

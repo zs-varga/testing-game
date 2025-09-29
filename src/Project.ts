@@ -364,7 +364,7 @@ export class Project implements IProject {
     size: number = 0
   ): ITestTask {
     const id = this.getNextId();
-    
+
     switch (type.toLowerCase()) {
       case "exploratory":
         return new ExploratoryTestTask(id, name, this, features, size);

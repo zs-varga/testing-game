@@ -241,7 +241,7 @@ describe('Project Class', () => {
 
     test('should create functional test task', () => {
       const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
-      const testTask = project.createTestTask('functional', 'Functional Test', [feature], 2);
+      const testTask = project.createTestTask('functionality', 'Functional Test', [feature], 2);
       
       expect(testTask).toBeDefined();
       expect(testTask.name).toBe('Functional Test');
