@@ -279,16 +279,6 @@ describe('Project Class', () => {
       expect(testTask.getType()).toBe('UsabilityTestTask');
     });
 
-    test('should create risk assessment test task', () => {
-      const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
-      const testTask = project.createTestTask('risk-assessment', 'Risk Assessment', [feature], 3);
-      
-      expect(testTask).toBeDefined();
-      expect(testTask.name).toBe('Risk Assessment');
-      expect(testTask.size).toBe(3);
-      expect(testTask.getType()).toBe('RiskAssessmentTask');
-    });
-
     test('should throw error for invalid test task type', () => {
       const feature = new Feature(project.getNextId(), 'Test Feature', project, 5);
       

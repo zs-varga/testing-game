@@ -184,7 +184,6 @@ export default function App() {
       // Map UI action names to factory method types
       const taskTypeMap = {
         "Exploratory Testing": "exploratory",
-        "Risk Assessment": "risk-assessment", 
         "Functional Testing": "functionality",
         "Performance Testing": "performance",
         "Security Testing": "security",

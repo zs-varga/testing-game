@@ -16,18 +16,18 @@ const FeatureCard = ({ task }) => {
         {task.knowledge > 0 && (
           <span title="Size" className="task-detail" data-content={task.size}>📦 Size: {task.size}</span>
         )}
-        {task.knowledge > 0.3 && (
+        {task.knowledge > 0.4 && (
           <span title="Complexity" className="task-detail" data-content={task.complexity}>🧩 Complexity: {task.complexity}</span>
         )}
-        {task.knowledge > 0.5 && (
+        {task.knowledge > 0.6 && (
           <span title="Found Defects" className="task-detail" data-content={task.getFoundDefects().length}>🐞 Defects: {task.getFoundDefects().length}</span>
         )}
-        {task.riskKnowledge > 0 && riskEntries.length > 0 && (
-          <span title="Risk" className="task-detail" data-content={task.riskKnowledge > 0.8
+        {task.knowledge > 0.8 && (
+          <span title="Risk" className="task-detail" data-content={task.knowledge > 0.9
             ? riskEntries.map(([k, v]) => `${k}`).join(' > ')
             : riskEntries[0][0]
           }>
-            ⚠️ Risks: {task.riskKnowledge > 0.8
+            ⚠️ Risks: {task.knowledge > 0.9
               ? riskEntries.map(([k, v]) => `${k}`).join(" > ")
               : riskEntries[0][0]}              
           </span>

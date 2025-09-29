@@ -5,8 +5,7 @@ import {
   FunctionalTestTask,
   PerformanceTestTask,
   SecurityTestTask,
-  UsabilityTestTask,
-  RiskAssessmentTask
+  UsabilityTestTask
 } from '../src/TestTask/index.js';
 
 describe("TestTask Subclasses", () => {
@@ -106,26 +105,6 @@ describe("TestTask Subclasses", () => {
       task.done();
       
       expect(feature.knowledge).toBeGreaterThanOrEqual(initialKnowledge);
-    });
-  });
-
-  describe('RiskAssessmentTask', () => {
-    test('should execute risk assessment task', () => {
-      const task = new RiskAssessmentTask(1, 'Risk Assessment', project, [feature], 3);
-      
-      task.done();
-      
-      expect(task.isDone()).toBe(true);
-      expect(task.getType()).toBe('RiskAssessmentTask');
-    });
-
-    test('should update feature risk knowledge on execution', () => {
-      const initialRiskKnowledge = feature.riskKnowledge;
-      const task = new RiskAssessmentTask(1, 'Risk Assessment', project, [feature], 3);
-      
-      task.done();
-      
-      expect(feature.riskKnowledge).toBeGreaterThanOrEqual(initialRiskKnowledge);
     });
   });
 });

@@ -137,42 +137,7 @@ export async function strategyRisk(project: Project) {
   ) as Feature[];
   const doneFeatures = features.filter((f) => f.isDone());
 
-  if (project.sprints.length === 1) {
-    // In the first sprint, we gather knowledge
-    const testTaskInstance = project.createTestTask(
-      "gather-knowledge",
-      "task name",
-      features,
-      project.testEffort
-    );
-    project.backlog.push(testTaskInstance);
-    currentSprint.addTestTask(testTaskInstance);
-    return;
-  }
-
-  if (project.sprints.length === 2) {
-    // In the second sprint, we gather knowledge + assess risk
-    const testTaskInstance = project.createTestTask(
-      "gather-knowledge",
-      "task name",
-      features,
-      project.testEffort - 1
-    );
-    project.backlog.push(testTaskInstance);
-    currentSprint.addTestTask(testTaskInstance);
-
-    const testTaskInstance2 = project.createTestTask(
-      "risk-assessment",
-      "task name",
-      features,
-      1
-    );
-    project.backlog.push(testTaskInstance2);
-    currentSprint.addTestTask(testTaskInstance2);
-    return;
-  }
-
-  // after the second sprint, we gather knowledge until there are no dev tasks
+  // we gather knowledge until there are no dev tasks
   if (currentSprint.devTasks.length > 0) {
     // Gather knowledge until there are dev tasks in the sprint
     const testTaskInstance = project.createTestTask(
@@ -266,43 +231,7 @@ export async function strategyFocused(project: Project) {
 
   const sprintNumber = project.sprints.length;
 
-  // In the first sprint, we gather knowledge
-  if (sprintNumber === 1) {
-    const testTaskInstance = project.createTestTask(
-      "gather-knowledge",
-      "knowledge 1 task name",
-      features,
-      project.testEffort
-    );
-    project.backlog.push(testTaskInstance);
-    currentSprint.addTestTask(testTaskInstance);
-    return;
-  }
-
-  // In the second sprint, we gather knowledge + assess risk
-  if (sprintNumber === 2) {
-    const testTaskInstance = project.createTestTask(
-      "gather-knowledge",
-      "knowledge task name",
-      features,
-      project.testEffort - 1
-    );
-    project.backlog.push(testTaskInstance);
-    currentSprint.addTestTask(testTaskInstance);
-
-    const testTaskInstance2 = project.createTestTask(
-      "risk-assessment",
-      "risk task name",
-      features,
-      1
-    );
-    project.backlog.push(testTaskInstance2);
-    currentSprint.addTestTask(testTaskInstance2);
-    return;
-  }
-
-  // From third sprint onwards, we gather knowledge until
-  // there are no dev tasks in the sprint
+  // we gather knowledge until there are no dev tasks in the sprint
   if (currentSprint.devTasks.length > 0) {
     const testTaskInstance = project.createTestTask(
       "gather-knowledge",

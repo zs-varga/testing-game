@@ -5,7 +5,6 @@ import { Sprint } from "./Sprint.js";
 import { ITestTask } from "./TestTask/TestTask.js";
 import { ExploratoryTestTask } from "./TestTask/ExploratoryTestTask.js";
 import { GatherKnowledgeTask } from "./TestTask/GatherKnowledgeTask.js";
-import { RiskAssessmentTask } from "./TestTask/RiskAssessmentTask.js";
 import { PerformanceTestTask } from "./TestTask/PerformanceTestTask.js";
 import { SecurityTestTask } from "./TestTask/SecurityTestTask.js";
 import { UsabilityTestTask } from "./TestTask/UsabilityTestTask.js";
@@ -370,8 +369,6 @@ export class Project implements IProject {
         return new ExploratoryTestTask(id, name, this, features, size);
       case "gather-knowledge":
         return new GatherKnowledgeTask(id, name, this, features, size);
-      case "risk-assessment":
-        return new RiskAssessmentTask(id, name, this, features, size);
       case "performance":
         return new PerformanceTestTask(id, name, this, features, size);
       case "security":

@@ -17,11 +17,6 @@ const TestTaskCard = ({
       return true;
     }
 
-    // risk assessment can be done on features that we have knowledge about
-    if (["Risk Assessment"].includes(task.action)) {
-      return feature.knowledge > 0;
-    }
-
     // focused testing can be done on features that are already done
     if (
       [
@@ -127,7 +122,6 @@ const TestTaskCard = ({
             onChange={(e) => handleActionChange(e.target.value)}
           >
             <option value="Knowledge Gathering">Knowledge Gathering</option>
-            <option value="Risk Assessment">Risk Assessment</option>
             <option value="Exploratory Testing">Exploratory Testing</option>
             <option value="Functional Testing">Functional Testing</option>
             <option value="Performance Testing">Performance Testing</option>
