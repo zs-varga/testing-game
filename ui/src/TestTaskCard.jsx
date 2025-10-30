@@ -129,7 +129,7 @@ const TestTaskCard = ({
             <option value="Security Testing">Security Testing</option>
           </select>
         </div>
-        <div className="feature-multiselect field-group vertical">
+        <div className="field-group vertical">
           <label className="field-label">Focus</label>
           <ul className="feature-list">
             <li className="feature-list-select-all">

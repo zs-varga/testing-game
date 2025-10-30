@@ -139,7 +139,9 @@ export default function App() {
   const [maxDevEffort, setMaxDevEffort] = useState(0);
   const [testEffort, setTestEffort] = useState(10); // default fallback
   const [sprintDone, setSprintDone] = useState(false);
-  const [testTasks, setTestTasks] = useState([]);
+  const [testTasks, setTestTasks] = useState([
+    { action: "Knowledge Gathering", selectedFeatures: [], effort: 1 }
+  ]);
   // Validation error state from Board
   const [validationError, setValidationError] = useState(false);
   const [showTestEffortModal, setShowTestEffortModal] = useState(false);
@@ -281,7 +283,7 @@ export default function App() {
             onClick={handleExecuteSprint}
             disabled={sprintDone || validationError}
           >
-            Execute Sprint
+            ✓ Execute Sprint
           </button>
         </div>
       </header>
@@ -295,6 +297,9 @@ export default function App() {
           setValidationError={setValidationError}
           testTasks={testTasks}
           setTestTasks={setTestTasks}
+          onExecuteSprint={handleExecuteSprint}
+          sprintDone={sprintDone}
+          validationError={validationError}
         />
         {showTestEffortModal && (
           <div className="modal-overlay">
@@ -324,7 +329,7 @@ export default function App() {
         {showGameEndModal && (
           <div className="modal-overlay">
             <div className="modal">
-              <h3>Game Over</h3>
+              <h3>Product Shipped!</h3>
               <p>{gameResult}</p>
               <div className="modal-actions">
                 <button
@@ -350,6 +355,9 @@ function Board({
   setValidationError,
   testTasks,
   setTestTasks,
+  onExecuteSprint,
+  sprintDone,
+  validationError,
 }) {
   // Filter backlog: exclude done and current sprint items
   const devTaskIds = new Set(devTasks.map((t) => t.id));
@@ -442,7 +450,15 @@ function Board({
               onDelete={() => handleDeleteTestTask(idx)}
             />
           )),
-          <button key="add-btn" className="btn btn-secondary" onClick={handleAddTestTask}>Add test task</button>
+          <button key="add-btn" className="btn btn-secondary" onClick={handleAddTestTask}>+ Add Test Task</button>,
+          <button 
+            key="execute-sprint-btn" 
+            className="btn btn-primary" 
+            onClick={onExecuteSprint}
+            disabled={sprintDone || validationError}
+          >
+            ✓ Execute Sprint
+          </button>
         ]}
       />
     </div>

@@ -11,7 +11,7 @@ export function startGame() {
     minFeatureSize: 3,
     maxFeatureSize: 7,
     minFeatureComplexity: 3,
-    maxFeatureComplexity: 5,
+    maxFeatureComplexity: 7,
     featureCount: 5,
     maxStealth: 0.84,
     testEffortCoefficient: 0.29,

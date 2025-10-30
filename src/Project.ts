@@ -404,8 +404,8 @@ export class Project implements IProject {
 
       const isWon = percentNotDone <= 10;
       const result = isWon
-        ? `You won! ${percentNotDone}% of defects were not found.`
-        : `You lost! ${percentNotDone}% of defects were not found.`;
+        ? `🎉 You won! ${percentNotDone}% of defects were not found.`
+        : `❌ You lost! ${percentNotDone}% of defects were not found.`;
 
       // Log unfound defects for debugging
       if (!isWon) {

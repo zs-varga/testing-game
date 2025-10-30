@@ -38,9 +38,11 @@ export class TestFunctions {
     if (unknownDefects.length === 0) {
       return;
     }
-    
+
     let foundDefectNumber = 0;
-    const maxDefectsToFind = Math.round(effort / feature.size) * feature.size;
+    const maxDefectsToFind = Math.round(
+      (Math.round(effort / feature.size) * feature.size) / 2
+    );
 
     //console.log(`${maxDefectsToFind} vs ${unknownDefects.length}`);
     for (const defect of unknownDefects) {
@@ -51,11 +53,17 @@ export class TestFunctions {
       const knowledgeFactor = Math.max(project.testKnowledgeCoefficient * feature.knowledge, 0.05); // higher knowledge means higher chance to find defects
       const detectionScore = baseChance * effortFactor * typeFactor * knowledgeFactor;
       */
-
+/*
       const detectionScore =
         0.1 +
         (project.testEffortCoefficient * effort) / feature.size +
         (defect.defectType === type ? project.testTypeCoefficient : 0) +
+        project.testKnowledgeCoefficient * feature.knowledge;
+*/
+      const detectionScore =
+        0.1 +
+        project.testEffortCoefficient * (effort / project.testEffort) +
+        project.testTypeCoefficient * (defect.defectType === type ? 1 : 0) +
         project.testKnowledgeCoefficient * feature.knowledge;
 
       if (detectionScore >= defect.stealth) {

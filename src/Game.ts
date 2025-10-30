@@ -106,20 +106,29 @@ export class Game implements IGame {
 
       const size = (() => {
         const randomValue = Math.pow(Math.random(), 0.4); // Lower values create more variance (try 0.2-0.5)
-        return Math.floor(randomValue * (project.maxFeatureSize - project.minFeatureSize + 1)) + project.minFeatureSize;
+        return (
+          Math.floor(
+            randomValue * (project.maxFeatureSize - project.minFeatureSize + 1)
+          ) + project.minFeatureSize
+        );
       })();
 
       const complexity = (() => {
         const randomValue = Math.pow(Math.random(), 0.4); // Lower values create more variance (try 0.2-0.5)
-        return Math.floor(randomValue * (project.maxFeatureComplexity - project.minFeatureComplexity + 1)) + project.minFeatureComplexity;
+        return (
+          Math.floor(
+            randomValue *
+              (project.maxFeatureComplexity - project.minFeatureComplexity + 1)
+          ) + project.minFeatureComplexity
+        );
       })();
-      
+
       const feature = new Feature(
         id,
         featureName,
         project,
-        size, // size
-        complexity, // complexity
+        size,
+        complexity,
         0, // knowledge
         "new"
       );
@@ -200,7 +209,8 @@ export class Game implements IGame {
 
     // Determine defect count (skewed toward maxDefects)
     const power = 4; // Higher power means more skewed distribution towards maxDefects
-    const defectCount = Math.floor(Math.pow(Math.random(), 1/power) * maxDefects) + 1;
+    const defectCount =
+      Math.floor(Math.pow(Math.random(), 1 / power) * maxDefects) + 1;
     const createdDefects: IDefect[] = [];
     const defectTypes: DefectType[] = [
       "functionality",
@@ -267,11 +277,12 @@ export class Game implements IGame {
   ): Defect[] {
     // Determine defect count (skewed toward maxDefects)
     const power = 4; // Higher power means more skewed distribution towards maxDefects
-    const defectCount = Math.floor(Math.pow(Math.random(), 1/power) * maxDefects) + 1;
+    const defectCount =
+      Math.floor(Math.pow(Math.random(), 1 / power) * maxDefects) + 1;
     const otherFeatures = project.backlog.filter(
       (item) =>
         item.id !== task.id && item.getType() === "Feature" && item.isDone()
-    );
+    ) as Feature[];
 
     if (otherFeatures.length === 0) {
       return [];
@@ -293,33 +304,28 @@ export class Game implements IGame {
         r -= featureWeights[i];
       }
       // Fallback: if all weights are zero, pick a random feature
-      return otherFeatures[Math.floor(Math.random() * otherFeatures.length)];
+      return otherFeatures[Math.floor(Math.random() * otherFeatures.length)] as Feature;
     }
 
-    // Weighted defect type selection based on risks
-    const defectTypes: DefectType[] = [
-      "functionality",
-      "usability",
-      "performance",
-      "security",
-    ];
-    const typeWeights = defectTypes.map((type) => (task as Feature).risks[type]);
-    const totalTypeWeight = typeWeights.reduce((a, b) => a + b, 0);
     const newDefects: Defect[] = [];
     for (let i = 0; i < defectCount; i++) {
       const randomFeature = weightedRandomFeature();
-      let type;
+
+      // Weighted defect type selection based the risk of the affected feature
+      // (Not the cause task)
+      let type: DefectType = "functionality";
+      const riskEntries = Object.entries(randomFeature.risks) as [DefectType, number][];
+      const totalTypeWeight = riskEntries.reduce((sum, [, weight]) => sum + weight, 0);
+      let cumulative = 0;
+      for (const [defectType, weight] of riskEntries) {
+        cumulative += weight;
+        if (Math.random() * totalTypeWeight < cumulative) {
+          type = defectType;
+          break;
+        }
+      }
 
       if (task.getType() === "Feature") {
-        let cumulative = 0;
-        let type = defectTypes[0];
-        for (let j = 0; j < defectTypes.length; j++) {
-          cumulative += typeWeights[j];
-          if (Math.random() * totalTypeWeight < cumulative) {
-            type = defectTypes[j];
-            break;
-          }
-        }
       } else {
         type = (task as IDefect).defectType;
       }

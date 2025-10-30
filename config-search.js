@@ -16,16 +16,16 @@ async function searchConfigSpace(
   const baseConfig = {
     devEffort: 10,
     testEffort: 5,
-    regressionRisk: 0.07,
+    regressionRisk: 0.05,
     minFeatureSize: 3,
     maxFeatureSize: 7,
     minFeatureComplexity: 3,
-    maxFeatureComplexity: 5,
+    maxFeatureComplexity: 7,
     featureCount: 5,
-    maxStealth: 0.84,
-    testEffortCoefficient: 0.29,
-    testTypeCoefficient: 0.41,
-    testKnowledgeCoefficient: 0.37,
+    maxStealth: 0.85,
+    testEffortCoefficient: 0.2,
+    testTypeCoefficient: 0.2,
+    testKnowledgeCoefficient: 0.4,
   };
 
   // Define parameter ranges for search
@@ -64,6 +64,20 @@ async function searchConfigSpace(
       baselineResults
         .map((r) => `${r.strategy}: ${(r.winRate * 100).toFixed(1)}%`)
         .join(", ")
+    );
+
+    // Show baseline order vs target order
+    const baselineOrder = [...baselineResults]
+      .sort((a, b) => b.winRate - a.winRate)
+      .map((r) => r.strategy);
+    const baselineHasCorrectOrder =
+      JSON.stringify(baselineOrder) === JSON.stringify(targetOrder);
+
+    console.log(`Target order: ${targetOrder.join(" > ")}`);
+    console.log(
+      `Baseline order: ${baselineOrder.join(" > ")} ${
+        baselineHasCorrectOrder ? "✅" : "❌"
+      }`
     );
   } catch (error) {
     console.error("Failed to evaluate baseline:", error.message);
@@ -126,24 +140,39 @@ async function searchConfigSpace(
       const outperformsBaseline =
         bestCurrentStrategy.winRate > baselineBest.winRate;
 
-      // Fitness function: prioritize order correctness, baseline outperformance, then maximize differences
+      // Check if baseline has the correct order
+      const baselineOrder = [...baselineResults]
+        .sort((a, b) => b.winRate - a.winRate)
+        .map((r) => r.strategy);
+      const baselineHasCorrectOrder =
+        JSON.stringify(baselineOrder) === JSON.stringify(targetOrder);
+
+      // Fitness function: prioritize order correctness over baseline performance when baseline has wrong order
       let fitness = 0;
-      if (
-        orderMatches &&
-        minAdjacentDiff >= minDifference &&
-        outperformsBaseline
-      ) {
-        // Perfect: right order, sufficient gaps, and outperforms baseline
-        fitness = totalDifference + 0.5; // Bonus for beating baseline
-      } else if (orderMatches && minAdjacentDiff >= minDifference) {
-        // Right order and gaps but doesn't beat baseline
-        fitness = totalDifference * 0.3;
-      } else if (orderMatches && outperformsBaseline) {
-        // Right order and beats baseline but insufficient gaps
-        fitness = totalDifference * 0.6;
+      if (orderMatches && minAdjacentDiff >= minDifference) {
+        if (baselineHasCorrectOrder) {
+          // Baseline has correct order, so we need to outperform it
+          if (outperformsBaseline) {
+            fitness = totalDifference + 1.0; // Perfect: right order, sufficient gaps, and outperforms good baseline
+          } else {
+            fitness = totalDifference * 0.3; // Right order and gaps but doesn't beat good baseline
+          }
+        } else {
+          // Baseline has wrong order, so any correct order with sufficient gaps is good
+          fitness = totalDifference + 2.0; // Bonus for having correct order when baseline doesn't
+        }
       } else if (orderMatches) {
-        // Right order but insufficient gaps and doesn't beat baseline
-        fitness = totalDifference * 0.2;
+        if (baselineHasCorrectOrder) {
+          // Baseline has correct order, so performance matters more
+          if (outperformsBaseline) {
+            fitness = totalDifference * 0.6; // Right order and beats baseline but insufficient gaps
+          } else {
+            fitness = totalDifference * 0.2; // Right order but insufficient gaps and doesn't beat baseline
+          }
+        } else {
+          // Baseline has wrong order, so correct order is valuable even without sufficient gaps
+          fitness = totalDifference + 1.0; // Good bonus for correct order when baseline is wrong
+        }
       } else {
         // Wrong order - penalize by number of violations
         fitness = -orderViolations * 10;
@@ -158,6 +187,7 @@ async function searchConfigSpace(
         outperformsBaseline,
         bestCurrentStrategy,
         baselineBest,
+        baselineHasCorrectOrder,
         fitness,
         actualOrder,
         avgWinRate:
@@ -202,7 +232,8 @@ async function searchConfigSpace(
         if (
           evaluation.orderMatches &&
           evaluation.minAdjacentDiff >= minDifference &&
-          evaluation.outperformsBaseline
+          (evaluation.outperformsBaseline ||
+            !evaluation.baselineHasCorrectOrder)
         ) {
           bestConfigs.push({
             config: { ...config },
@@ -273,7 +304,7 @@ async function searchConfigSpace(
           if (
             upEval.orderMatches &&
             upEval.minAdjacentDiff >= minDifference &&
-            upEval.outperformsBaseline
+            (upEval.outperformsBaseline || !upEval.baselineHasCorrectOrder)
           ) {
             bestConfigs.push({
               config: { ...upConfig },
@@ -312,7 +343,7 @@ async function searchConfigSpace(
           if (
             downEval.orderMatches &&
             downEval.minAdjacentDiff >= minDifference &&
-            downEval.outperformsBaseline
+            (downEval.outperformsBaseline || !downEval.baselineHasCorrectOrder)
           ) {
             bestConfigs.push({
               config: { ...downConfig },
@@ -372,6 +403,17 @@ async function searchConfigSpace(
     const baselineBest = baselineResults.reduce((best, current) =>
       current.winRate > best.winRate ? current : best
     );
+    const baselineOrder = [...baselineResults]
+      .sort((a, b) => b.winRate - a.winRate)
+      .map((r) => r.strategy);
+    const baselineHasCorrectOrder =
+      JSON.stringify(baselineOrder) === JSON.stringify(targetOrder);
+
+    console.log(
+      `Baseline order: ${baselineOrder.join(" > ")} ${
+        baselineHasCorrectOrder ? "✅" : "❌"
+      }`
+    );
     console.log(
       `Baseline to beat: ${baselineBest.strategy} at ${(
         baselineBest.winRate * 100
@@ -395,7 +437,26 @@ async function searchConfigSpace(
           entry.bestStrategy.winRate * 100
         ).toFixed(1)}%)`
       );
-      console.log(`   Outperforms Baseline: ✅`);
+
+      if (baselineResults) {
+        const baselineOrder = [...baselineResults]
+          .sort((a, b) => b.winRate - a.winRate)
+          .map((r) => r.strategy);
+        const baselineHasCorrectOrder =
+          JSON.stringify(baselineOrder) === JSON.stringify(targetOrder);
+
+        if (baselineHasCorrectOrder) {
+          console.log(
+            `   Outperforms Baseline: ${
+              entry.outperformsBaseline ? "✅" : "❌"
+            }`
+          );
+        } else {
+          console.log(
+            `   Baseline had wrong order, performance not required: ✅`
+          );
+        }
+      }
       console.log(`   Config:`, JSON.stringify(entry.config, null, 2));
       console.log(`   Strategy Results:`);
       entry.results.forEach((r) =>
@@ -421,8 +482,75 @@ async function searchConfigSpace(
         console.log(`   Target: ${targetOrder.join(" > ")}`);
         console.log(`   Actual: ${result.actualOrder.join(" > ")}`);
         console.log(`   Order Match: ${result.orderMatches ? "✅" : "❌"}`);
+
+        // Calculate additional stats
+        const sortedResults = result.results.sort(
+          (a, b) => b.winRate - a.winRate
+        );
+        const bestStrategy = sortedResults[0];
+        const avgWinRate =
+          result.results.reduce((sum, r) => sum + r.winRate, 0) /
+          result.results.length;
+
+        // Calculate min adjacent difference for target order
+        let minAdjacentDiff = Infinity;
+        let totalDifference = 0;
+        for (let i = 0; i < targetOrder.length - 1; i++) {
+          const currentStrategy = result.results.find(
+            (r) => r.strategy === targetOrder[i]
+          );
+          const nextStrategy = result.results.find(
+            (r) => r.strategy === targetOrder[i + 1]
+          );
+          if (currentStrategy && nextStrategy) {
+            const diff = currentStrategy.winRate - nextStrategy.winRate;
+            minAdjacentDiff = Math.min(minAdjacentDiff, diff);
+            totalDifference += Math.max(0, diff);
+          }
+        }
+
+        // Check baseline comparison
+        const baselineBest = baselineResults
+          ? baselineResults.reduce((best, current) =>
+              current.winRate > best.winRate ? current : best
+            )
+          : null;
+        const outperformsBaseline = baselineBest
+          ? bestStrategy.winRate > baselineBest.winRate
+          : false;
+
+        console.log(
+          `   Best Strategy: ${bestStrategy.strategy} (${(
+            bestStrategy.winRate * 100
+          ).toFixed(1)}%)`
+        );
+        console.log(`   Average Win Rate: ${(avgWinRate * 100).toFixed(1)}%`);
+        console.log(
+          `   Min Adjacent Diff: ${
+            minAdjacentDiff === Infinity
+              ? "N/A"
+              : (minAdjacentDiff * 100).toFixed(1) + "%"
+          }`
+        );
+        console.log(
+          `   Total Difference: ${(totalDifference * 100).toFixed(1)}%`
+        );
+        console.log(
+          `   Outperforms Baseline: ${outperformsBaseline ? "✅" : "❌"}`
+        );
+
+        console.log(`   Strategy Results:`);
         result.results.forEach((r) => {
-          console.log(`   ${r.strategy}: ${(r.winRate * 100).toFixed(1)}%`);
+          console.log(`     ${r.strategy}: ${(r.winRate * 100).toFixed(1)}%`);
+        });
+
+        console.log(`   Config:`);
+        Object.entries(result.config).forEach(([key, value]) => {
+          if (typeof value === "number") {
+            console.log(`     ${key}: ${value.toFixed(3)}`);
+          } else {
+            console.log(`     ${key}: ${value}`);
+          }
         });
       });
 
